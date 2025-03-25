@@ -1,0 +1,6 @@
+[submodule "external/PointMAE"]
+	path = external/PointMAE
+	url = https://github.com/kohjakob/Point-MAE
+[submodule "external/UnScene3D"]
+	path = external/UnScene3D
+	url = https://github.com/kohjakob/UnScene3D

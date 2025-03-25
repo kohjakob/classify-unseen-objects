@@ -1,0 +1,22 @@
+.vscode
+.idea
+**/__pycache__/
+
+# Ignore genereated outputs, but include directoriesß
+output/segmented_instances/*
+!output/segmented_instances/.gitkeep
+
+output/segmented_scenes/*
+!output/segmented_scenes/.gitkeep
+
+output/umap_visualizations/*ß
+!output/umap_visualizations/.gitkeep
+
+# Ignore datasets, but include directories
+data/scannet/*
+!data/scannet/.gitkeep
+
+data/shapenetcore/*
+!data/shapenetcore/.gitkeep
+external/PointMAE
+external/UnScene3D
