@@ -6,8 +6,8 @@ The project implements a pipeline for object detection and discovery from pointc
 Setup Guide is a work in progress and not yet fully tested start-to-finish.
 
 Currently working setups:
-> Jakobs Desktop: /home/shared/ @ eu.loclx.io:5903
-> CG-Lab Desktop: TODO @ cg.tuwien.ac.at 
+>- Jakobs Desktop: /home/shared/ @ eu.loclx.io:5903
+>- CG-Lab Desktop: TODO @ cg.tuwien.ac.at 
 
 ---
 
