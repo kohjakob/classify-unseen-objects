@@ -7,4 +7,4 @@ We want to classify objects in scenes that contain many similar objects (e.g., i
 
 The project implements a pipeline for object detection and discovery from pointcloud scenes and includes external projects for unsupervised object detection (UnScene3D) and feature extraction (Point-MAE). 
 
-Detailed instructions for project setup in SETUP.md
+Detailed instructions for project setup in [SETUP.md](https://github.com/kohjakob/classify-unseen-objects/blob/master/SETUP.md).

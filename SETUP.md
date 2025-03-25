@@ -117,20 +117,21 @@ Currently working setups:
 - Change to PointNet2 directory: ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/third_party/pointnet2```
 - Install PointNet2: ```python setup.py install```
 
-### Install other UnScene3D dependencies (TODO move to final joint yaml):
+### Install other UnScene3D dependencies (TODO: Move to a final joint .yml later):
 ```pip install open3d```
 ```pip install albumentations```
 ```pip install hydra-core --upgrade```
 ```pip install torch-scatter```
 ```pip install numpy==1.26.4```
 
-## Setup PointMAE dependencies:
+## Setup PointMAE dependencies (WIP, NOT FINISHED):
 
-TODO:
+### Install Point-MAE dependencies:
+- ```pip install -r $PROJECT_ROOT/classify-unseen-objects/external/PointMAE/requirements.txt```
 
-pip install -r requirements.txt
-# PointNet++
-pip install "git+https://github.com/erikwijmans/Pointnet2_PyTorch.git#egg=pointnet2_ops&subdirectory=pointnet2_ops_lib"
-# GPU kNN
-pip install --upgrade https://github.com/unlimblue/KNN_CUDA/releases/download/0.2/KNN_CUDA-0.2-py3-none-any.whl
-pip install emd
+### Setup PointNet++
+- ```pip install "git+https://github.com/erikwijmans/Pointnet2_PyTorch.git#egg=pointnet2_ops&subdirectory=pointnet2_ops_lib"```
+
+### GPU kNN
+- ```pip install --upgrade https://github.com/unlimblue/KNN_CUDA/releases/download/0.2/KNN_CUDA-0.2-py3-none-any.whl```
+- ```pip install emd```
