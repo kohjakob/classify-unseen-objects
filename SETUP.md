@@ -110,10 +110,12 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 ## 4. Python Dependencies Setup:
 
 #### 4.1 Classify Unseen Objects dependencies:
+##### Install required python dependencies:
 >TODO: This should be a unified requirements.txt/env.yml later
--   ```pip install pyqt5;```
-    ```pip install vtk;```
-    ```pip install umap-learn```
+- Other dependencies:    
+    - ```pip install pyqt5;```
+    - ```pip install vtk;```
+    - ```pip install umap-learn```
 
 #### 4.2 UnScene3D dependencies:
 
@@ -122,15 +124,15 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 - From UnScene3D .yml file: 
     - ```conda env update --file $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/conf/unscene3d_env.yml --prune```
 - Other dependencies:    
-    -   ```pip install open3d;```
-        ```pip install albumentations;```
-        ```pip install hydra-core --upgrade;```
-        ```pip install torch-scatter;```
-        ```pip install numpy==1.25.1;```
-        ```pip install albumentations;```
-        ```pip install wandb;```
-        ```pip install torchmetrics==1.1.0;```
-        ```pip install easydict```
+    - ```pip install open3d;```
+    - ```pip install albumentations;```
+    - ```pip install hydra-core --upgrade;```
+    - ```pip install torch-scatter;```
+    - ```pip install numpy==1.25.1;```
+    - ```pip install albumentations;```
+    - ```pip install wandb;```
+    - ```pip install torchmetrics==1.1.0;```
+    - ```pip install easydict```
 ##### Install PyTorch:
 - Install PyTorch 1.13.1 [compatible with CUDA Toolkit 11.6](https://pytorch.org/get-started/previous-versions/): 
     - ```pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116```
@@ -139,48 +141,48 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 - Clone [MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) repo: 
     - ```git clone https://github.com/NVIDIA/MinkowskiEngine.git $PROJECT_ROOT```
 - Export relevant environment variables:
-    -   ```export CONDA_DEFAULT_ENV=classify-unseen-objects;``` 
-        ```export CONDA_PYTHON_EXE=$CONDA_ROOT/bin/python;```  
-        ```export CONDA_PREFIX=$CONDA_ROOT/envs/classify-unseen-objects;``` 
-        ```export CONDA_PREFIX_1=$CONDA_ROOT/miniconda3;``` 
-        ```export LD_LIBRARY_PATH=$PROJECT_ROOT/cuda-11.6/toolkit/lib64;``` 
-        ```export CUDNN_LIB_DIR=$PROJECT_ROOT/cuda-11.6/toolkit/lib64;``` 
-        ```export CUDA_HOME=$PROJECT_ROOT/cuda-11.6/toolkit;``` 
-        ```export TORCH_CUDA_ARCH_LIST="6.0;7.0;7.5";```
-        ```export CXX=g++-9;``` 
-        ```export CC=gcc-9```
+    - ```export CONDA_DEFAULT_ENV=classify-unseen-objects;``` 
+    - ```export CONDA_PYTHON_EXE=$CONDA_ROOT/bin/python;```  
+    - ```export CONDA_PREFIX=$CONDA_ROOT/envs/classify-unseen-objects;``` 
+    - ```export CONDA_PREFIX_1=$CONDA_ROOT/miniconda3;``` 
+    - ```export LD_LIBRARY_PATH=$PROJECT_ROOT/cuda-11.6/toolkit/lib64;``` 
+    - ```export CUDNN_LIB_DIR=$PROJECT_ROOT/cuda-11.6/toolkit/lib64;``` 
+    - ```export CUDA_HOME=$PROJECT_ROOT/cuda-11.6/toolkit;``` 
+    - ```export TORCH_CUDA_ARCH_LIST="6.0;7.0;7.5";```
+    - ```export CXX=g++-9;``` 
+    - ```export CC=gcc-9```
 - Symlink g++ to g++-9: 
     - ```sudo ln -s /usr/bin/g++-9 /usr/bin/g++```
 - Add gcc-9 and g++-9 to alternatives system: 
-    -   ```sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60;```
-        ```sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 60```
+    -  ```sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60;```
+    -  ```sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 60```
 - Configure alternatives to use gcc-9:
     - ```sudo update-alternatives --config gcc```
 - Conifgure alternatives to use g++-9: 
     - ```sudo update-alternatives --config g++```
 - Sanity check versions: 
-    -   ```gcc --version;```
-        ```g++ --version```
+    - ```gcc --version;```
+    - ```g++ --version```
 - Install openblas-devel: 
     - ```conda install openblas-devel -c anaconda```
 - Build and install to MinkowskiEngine: 
-    -   ```cd $PROJECT_ROOT/MinkowskiEngine;```
-        ```python setup.py install --blas_include_dirs=${CONDA_PREFIX}/include --blas=openblas```
+    - ```cd $PROJECT_ROOT/MinkowskiEngine;```
+    - ```python setup.py install --blas_include_dirs=${CONDA_PREFIX}/include --blas=openblas```
 
 ##### Build and install Detectron2:
 - ```python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'```
 
 ##### Build and install UnScene3D Utils:
 - C++ utils: 
-    -   ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/utils/cpp_utils;```
-        ```python setup.py install```
+    - ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/utils/cpp_utils;```
+    - ```python setup.py install```
 - CUDA utils: 
-    -   ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/utils/cuda_utils;```
-        ```python setup.py install```
+    - ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/utils/cuda_utils;```
+    - ```python setup.py install```
      
 ##### Build and install PointNet2:
--   ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/third_party/pointnet2;```
-    ```python setup.py install```
+- ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/third_party/pointnet2;```
+- ```python setup.py install```
 
 #### 4.3 PointMAE dependencies:
 
@@ -189,9 +191,9 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 - From Point-MAE requirements.txt:
     - ```pip install -r $PROJECT_ROOT/classify-unseen-objects/external/PointMAE/requirements.txt```
 - Other dependencies:    
-    -   ```pip install emd;```
-        ```pip install timm;```
-        ```pip install loguru```
+    - ```pip install emd;```
+    - ```pip install timm;```
+    - ```pip install loguru```
 ##### Install pointnet2_ops
 - ```pip install "git+https://github.com/erikwijmans/Pointnet2_PyTorch.git#egg=pointnet2_ops&subdirectory=pointnet2_ops_lib"```
 
