@@ -9,7 +9,7 @@ fi
 
 # Set the PROJECT_ROOT and output directory variables
 PROJECT_ROOT=$1
-OUTPUT_DIR="$PROJECT_ROOT/classify-unseen-objects/data/scannet/scannet_scenes/"
+OUTPUT_DIR="$PROJECT_ROOT/classify-unseen-objects/classify-unseen-objects/data/scannet/scannet_scenes/"
 
 # Get the start and stop scene arguments
 START_SCENE=$2
@@ -31,6 +31,6 @@ do
     for TYPE in "${FILE_TYPES[@]}"
     do
         echo "  Downloading ${TYPE}..."
-        echo | python3 data/scannet-download-script/download_scannet.py --type $TYPE --id $SCENE_ID --o $OUTPUT_DIR
+        echo | python3 $PROJECT_ROOT/classify-unseen-objects/data/download-scripts/download_scannet.py --type $TYPE --id $SCENE_ID --o $OUTPUT_DIR
     done
 done
