@@ -39,11 +39,11 @@ Currently working setups:
 #### Download datasets:
 
 - **ShapeNetCore**: [ShapeNetCore](https://www.kaggle.com/datasets/jeremy26/shapenet-core) can be automatically downloaded into ```$PROJECT_ROOT/classify-unseen-objects/data/shapenetcore``` by running: 
-    - ```bash $PROJECT_ROOT/data/download-scripts/download_shapenetcore.sh $PROJECT_ROOT```
+    - ```bash $PROJECT_ROOT/classify-unseen-objects/data/download-scripts/download_shapenetcore.sh $PROJECT_ROOT```
 <br>
 
 - **ScanNet**: Subsets of [ScanNet](http://www.scan-net.org/) scenes can be automatically downloaded into ```$PROJECT_ROOT/classify-unseen-objects/data/scannet/scannet_scenes/``` by running: 
-    - ```bash $PROJECT_ROOT/data/download-scripts/download_scannet.sh $PROJECT_ROOT <start_scene> <stop_scene>```
+    - ```bash $PROJECT_ROOT/classify-unseen-objects/data/download-scripts/download_scannet.sh $PROJECT_ROOT <start_scene> <stop_scene>```
 
 ---
 
@@ -109,7 +109,13 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 
 ## 4. Python Dependencies Setup:
 
-#### UnScene3D dependencies:
+#### 4.1 Classify Unseen Objects dependencies:
+>TODO: This should be a unified requirements.txt/env.yml later
+-   ```pip install pyqt5;```
+    ```pip install vtk;```
+    ```pip install umap-learn```
+
+#### 4.2 UnScene3D dependencies:
 
 ##### Install required python dependencies:
 >TODO: This should be a unified requirements.txt/env.yml later
@@ -120,7 +126,11 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
         ```pip install albumentations;```
         ```pip install hydra-core --upgrade;```
         ```pip install torch-scatter;```
-        ```pip install numpy==1.26.4;```
+        ```pip install numpy==1.25.1;```
+        ```pip install albumentations;```
+        ```pip install wandb;```
+        ```pip install torchmetrics==1.1.0;```
+        ```pip install easydict```
 ##### Install PyTorch:
 - Install PyTorch 1.13.1 [compatible with CUDA Toolkit 11.6](https://pytorch.org/get-started/previous-versions/): 
     - ```pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116```
@@ -136,6 +146,7 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
         ```export LD_LIBRARY_PATH=$PROJECT_ROOT/cuda-11.6/toolkit/lib64;``` 
         ```export CUDNN_LIB_DIR=$PROJECT_ROOT/cuda-11.6/toolkit/lib64;``` 
         ```export CUDA_HOME=$PROJECT_ROOT/cuda-11.6/toolkit;``` 
+        ```export TORCH_CUDA_ARCH_LIST="6.0;7.0;7.5";```
         ```export CXX=g++-9;``` 
         ```export CC=gcc-9```
 - Symlink g++ to g++-9: 
@@ -171,14 +182,16 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 -   ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/third_party/pointnet2;```
     ```python setup.py install```
 
-#### PointMAE dependencies:
+#### 4.3 PointMAE dependencies:
 
 ##### Install required python dependencies:
 >TODO: This should be a unified requirements.txt/env.yml later
 - From Point-MAE requirements.txt:
     - ```pip install -r $PROJECT_ROOT/classify-unseen-objects/external/PointMAE/requirements.txt```
 - Other dependencies:    
-    - ```pip install emd```
+    -   ```pip install emd;```
+        ```pip install timm;```
+        ```pip install loguru```
 ##### Install pointnet2_ops
 - ```pip install "git+https://github.com/erikwijmans/Pointnet2_PyTorch.git#egg=pointnet2_ops&subdirectory=pointnet2_ops_lib"```
 
