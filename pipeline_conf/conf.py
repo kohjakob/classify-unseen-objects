@@ -3,8 +3,12 @@ from dataclasses import dataclass
 from pathlib import Path
 import albumentations as A
 
-# Replaced automatically by running a bash script
-BASE_DIR = "PLACEHOLDER_PROJECT_ROOT/classify_unseen_objects/"
+# !!! Do not change the following lines, they are needed for autmatic updating of the project root path !!!
+# PROJECT_ROOT_VARIABLE_MARKER
+PROJECT_ROOT = "/Users/kohjakob/Desktop"
+# !!! Do not change the above lines, they are needed for autmatic updating of the project root path !!!
+
+BASE_DIR = PROJECT_ROOT + "/classify-unseen-objects"
 
 @dataclass
 class Paths:

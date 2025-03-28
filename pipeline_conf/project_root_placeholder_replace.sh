@@ -9,12 +9,60 @@ fi
 # Set the PROJECT_ROOT variable
 PROJECT_ROOT=$1
 
-# Define the placeholder and the actual path
-PLACEHOLDER="PLACEHOLDER_PROJECT_ROOT"
-ACTUAL_PATH="$PROJECT_ROOT"
+# Define the target subdirectory
+TARGET_SUBDIR="$PROJECT_ROOT/classify-unseen-objects"
 
-# Replace the placeholder with the actual path in all .yml files
-find $PROJECT_ROOT -type f -name "*.yml" -exec sed -i "s|$PLACEHOLDER|$ACTUAL_PATH|g" {} +
-find $PROJECT_ROOT -type f -name "*.py" -exec sed -i "s|$PLACEHOLDER|$ACTUAL_PATH|g" {} +
+# Ensure the target subdirectory exists
+if [ ! -d "$TARGET_SUBDIR" ]; then
+  echo "Error: Directory $TARGET_SUBDIR does not exist."
+  exit 1
+fi
 
-echo "Placeholders replaced with actual paths."
+# Define the marker comment
+MARKER_COMMENT="# PROJECT_ROOT_VARIABLE_MARKER"
+
+# Find all Python and YAML files, but only within the classify-unseen-objects subdirectory
+find "$TARGET_SUBDIR" -type f \( -name "*.py" -o -name "*.yml" -o -name "*.yaml" \) | while read -r file; do
+  
+  # Use a temporary file
+  temp_file=$(mktemp)
+  
+  # Flag to indicate if we just saw a marker
+  found_marker=0
+  
+  # Process the file line by line
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    # If we found a marker in the previous iteration
+    if [ $found_marker -eq 1 ]; then
+      echo "Found marker in file: $file"
+
+      # Extract indentation and variable name
+      if [[ "$line" =~ ^([[:space:]]*)([a-zA-Z0-9_]+)(.*) ]]; then
+        indentation="${BASH_REMATCH[1]}"
+        var_name="${BASH_REMATCH[2]}"
+        
+        # Write the new line with updated path
+        echo "${indentation}${var_name} = \"$PROJECT_ROOT\"" >> "$temp_file"
+      else
+        # If we can't parse the line, keep it as is
+        echo "$line" >> "$temp_file"
+      fi
+      
+      # Reset the marker flag
+      found_marker=0
+    else
+      # Write the current line
+      echo "$line" >> "$temp_file"
+      
+      # Check if this line contains the marker
+      if [[ "$line" == *"$MARKER_COMMENT"* ]]; then
+        found_marker=1
+      fi
+    fi
+  done < "$file"
+  
+  # Replace the original file
+  mv "$temp_file" "$file"
+done
+
+echo "Path variables updated successfully in classify-unseen-objects directory."
