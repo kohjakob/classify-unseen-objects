@@ -18,5 +18,3 @@ data/scannet/*
 
 data/shapenetcore/*
 !data/shapenetcore/.gitkeep
-external/PointMAE
-external/UnScene3D
