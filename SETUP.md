@@ -70,7 +70,11 @@ Currently working setups:
 ## 3. CUDA Setup:
 More information in official [NVIDIA CUDA Installation Guide for Linux](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html).
 
-#### Install Nvidia driver 550.54.14 from CUDA Toolkit 12.4:
+#### Check Nvidia driver installation:
+- ```nvidia-smi```
+
+#### If ```nvidia-smi``` does not find Nvidia driver or driver is older than 510.39.01, install Nvidia driver 550.54.14 from CUDA Toolkit 12.4:
+>- TODO: Add instructions to uninstall old Nvidia driver, depending on if it is runfile or package manager installation.
 - Download [CUDA Toolkit 12.4](https://developer.nvidia.com/cuda-12-4-0-download-archive) runfile:
     - ```wget -P $PROJECT_ROOT https://developer.download.nvidia.com/compute/cuda/12.4.0/local_installers/cuda_12.4.0_550.54.14_linux.run```
 - Switch text-only terminal mode (tty), switch to multi-user target, check which display manager is running and stop it: 
@@ -168,6 +172,10 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 - Build and install to MinkowskiEngine: 
     - ```cd $PROJECT_ROOT/MinkowskiEngine;```
     - ```python setup.py install --blas_include_dirs=${CONDA_PREFIX}/include --blas=openblas```
+- Reconfigure alternatives to use previously used gcc version:
+    - ```sudo update-alternatives --config gcc```
+- Reconifgure alternatives to use previously used g++ version: 
+    - ```sudo update-alternatives --config g++```
 
 ##### Build and install Detectron2:
 - ```python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'```
