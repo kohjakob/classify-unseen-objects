@@ -32,6 +32,8 @@ class Paths:
     # Base directory where the cat IDs (02691156, 03001627, etc.) reside
     shapenetcore_base_dir = os.path.join(BASE_DIR, "data/shapenetcore/Shapenetcore_benchmark")
 
+    scannet_instance_output_dir = os.path.join(BASE_DIR, "data/scannet/scannet_instances")
+
 PATHS = Paths()
 
 DEVICE = "cuda"

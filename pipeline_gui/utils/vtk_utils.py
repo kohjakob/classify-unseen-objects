@@ -34,3 +34,29 @@ def o3d_pcd_to_vtk(o3d_pcd):
     polydata.GetPointData().SetScalars(vtk_colors)
 
     return polydata
+
+def pcd_list_to_vtk(pcd_list):
+    """Convert point cloud list to VTK PolyData with correct color handling"""
+    points = np.asarray(pcd_list)
+
+    # Create vtk points
+    vtk_points = vtk.vtkPoints()
+    vtk_vertices = vtk.vtkCellArray()
+    vtk_colors = vtk.vtkUnsignedCharArray()
+    vtk_colors.SetNumberOfComponents(3)
+    vtk_colors.SetName('Colors')
+
+    # Add points
+    for i in range(len(points)):
+        point_id = vtk_points.InsertNextPoint(points[i])
+        vtk_vertices.InsertNextCell(1)
+        vtk_vertices.InsertCellPoint(point_id)
+        vtk_colors.InsertNextTuple3(150,150,150)
+
+    # Create polydata
+    polydata = vtk.vtkPolyData()
+    polydata.SetPoints(vtk_points)
+    polydata.SetVerts(vtk_vertices)
+    polydata.GetPointData().SetScalars(vtk_colors)
+
+    return polydata

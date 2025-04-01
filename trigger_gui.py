@@ -1,39 +1,123 @@
-import sys
+import os
 import numpy as np
-import open3d as o3d
-from PyQt5.QtWidgets import QApplication
-
-from pipeline_tasks.scan_loading import load_scannet_scene
-from pipeline_tasks.scan_preprocessing import preprocess_scannet_scene
-from pipeline_tasks.scan_segmentation import segment_scannet_scene
-from pipeline_tasks.segments_postprocessing import postprocess_scannet_segments
-from pipeline_tasks.segments_merging import merge_scannet_segments
-from pipeline_tasks.instances_filtering import filter_scannet_instances
-
-from pipeline_models.segmentation_model import InstanceSegmentationModel_UnScene3D
+import umap
+import vtk
+from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QWidget
+from PyQt5.QtCore import Qt
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from pipeline_conf.conf import PATHS
+from pipeline_gui.viewers.point_cloud_viewer import PointCloudViewer
+from pipeline_gui.utils.vtk_utils import o3d_pcd_to_vtk
 
-from pipeline_gui.utils.color_utils import generate_distinct_colors
-from pipeline_gui.utils.o3d_utils import create_scene_point_clouds
-from pipeline_gui.widgets.visualization_window import VisualizationWindow
+import sys
+
+class UMAPPlot(FigureCanvas):
+    def __init__(self, parent=None, on_point_click=None):
+        fig, self.ax = plt.subplots()
+        super(UMAPPlot, self).__init__(fig)
+        self.setParent(parent)
+        self.ax.set_title('UMAP of Feature Vectors')
+        self.embedding = None
+        self.on_point_click = on_point_click
+        self.cid = self.mpl_connect('button_press_event', self.onclick)
+
+    def calculate_umap(self, features):
+        reducer = umap.UMAP()
+        self.embedding = reducer.fit_transform(features)
+
+    def plot(self, labels, highlight_index):
+        self.ax.clear()
+        unique_labels = np.unique(labels)
+        colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_labels)))
+        for label, color in zip(unique_labels, colors):
+            self.ax.scatter(self.embedding[labels == label, 0], self.embedding[labels == label, 1], c=[color], label=f'Cluster {label}')
+        
+        highlight_color = colors[labels[highlight_index]]
+        self.ax.scatter(self.embedding[highlight_index, 0], self.embedding[highlight_index, 1], c=[highlight_color], edgecolors='black', s=100, label='Current instance')
+        
+        self.ax.legend()
+        self.draw()
+
+    def onclick(self, event):
+        if event.inaxes is not None and self.embedding is not None:
+            distances = np.linalg.norm(self.embedding - np.array([event.xdata, event.ydata]), axis=1)
+            closest_index = np.argmin(distances)
+            if self.on_point_click:
+                self.on_point_click(closest_index)
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        self.setWindowTitle('Point Cloud Viewer with UMAP')
+        self.setGeometry(100, 100, 1200, 600)
+
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        layout = QHBoxLayout(main_widget)
+
+        self.viewer1 = PointCloudViewer()
+        self.umap_plot = UMAPPlot(main_widget, self.on_umap_point_click)
+        self.next_button = QPushButton('Next')
+        self.next_button.clicked.connect(self.load_next_instance)
+
+        left_layout = QVBoxLayout()
+        right_layout = QVBoxLayout()
+
+        left_layout.addWidget(self.viewer1.widget)
+        right_layout.addWidget(self.umap_plot)
+        right_layout.addWidget(self.next_button)
+
+        layout.addLayout(left_layout)
+        layout.addLayout(right_layout)
+
+        self.current_index = 0
+        self.feature_data, self.label_data, self.point_data = self.load_data()
+        self.umap_plot.calculate_umap(self.feature_data)
+        self.update_view()
+
+    def load_data(self):
+        folder_path = PATHS.scannet_instance_output_dir
+        instances = [entry.name for entry in os.scandir(folder_path) if entry.name.endswith('.npz')]
+        features, labels, points = [], [], []
+
+        for scannet_instance in instances:
+            data = np.load(os.path.join(folder_path, scannet_instance), allow_pickle=True)
+            features.append(data['features'])
+            labels.append(data['label'])
+            points.append(data['points'])
+
+        return np.array(features), np.array(labels), points
+
+    def load_next_instance(self):
+        self.current_index = (self.current_index + 1) % len(self.point_data)
+        self.update_view()
+
+    def on_umap_point_click(self, index):
+        self.current_index = index
+        self.update_view()
+
+    def update_view(self):
+        # Update VTK viewer
+        current_points = np.array(self.point_data[self.current_index])
+        self.viewer1.clear_point_cloud()
+        self.viewer1.set_point_cloud(current_points, has_color=False)
+        self.iren1 = self.viewer1.widget.GetRenderWindow().GetInteractor()
+        self.viewer1.widget.GetRenderWindow().Render()
+        style1 = vtk.vtkInteractorStyleTrackballCamera()
+        self.iren1.SetInteractorStyle(style1)
+        self.iren1.Initialize()
+        self.viewer1.renderer.ResetCamera()
+        self.viewer1.widget.GetRenderWindow().Render()
+
+        # Update UMAP plot
+        self.umap_plot.plot(self.label_data, self.current_index)
 
 def main():
-    # Initialize the model
-    model = InstanceSegmentationModel_UnScene3D()
-    scannet_scene_name = 'scene0000_00'
-
-    # Load and process the scene
-    scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json = load_scannet_scene(PATHS.scannet_scenes, scannet_scene_name)
-    data, features, inverse_map, coords, colors_normalized, ground_truth_labels = preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json)
-    outputs = segment_scannet_scene(model, data, features)
-    masks_binary, mask_confidences, label_confidences = postprocess_scannet_segments(outputs, inverse_map, coords, colors_normalized, ground_truth_labels)
-    masks_binary, mask_confidences, label_confidences = merge_scannet_segments(masks_binary, mask_confidences, label_confidences)
-    masks_binary, mask_confidences, label_confidences = filter_scannet_instances(masks_binary, mask_confidences, label_confidences, 0.9)
-
-    app = QApplication(sys.argv)
-    original_cloud, foreground_cloud, background_cloud = create_scene_point_clouds(coords, colors_normalized, masks_binary)
-    window = VisualizationWindow(original_cloud, foreground_cloud, background_cloud, scannet_scene_name)
+    app = QApplication([])
+    window = MainWindow()
     window.show()
     sys.exit(app.exec_())
 

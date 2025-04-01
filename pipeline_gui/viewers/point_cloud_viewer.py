@@ -1,6 +1,6 @@
 import vtk
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-from ..utils.vtk_utils import o3d_pcd_to_vtk
+from ..utils.vtk_utils import o3d_pcd_to_vtk, pcd_list_to_vtk
 import os
 
 class PointCloudViewer:
@@ -29,10 +29,13 @@ class PointCloudViewer:
         widget.InteractiveOff()
         return widget
 
-    def set_point_cloud(self, point_cloud):
+    def set_point_cloud(self, point_cloud, has_color=True):
         """Set the point cloud to display"""
-        vtk_cloud = o3d_pcd_to_vtk(point_cloud)
-        
+        if has_color:
+            vtk_cloud = o3d_pcd_to_vtk(point_cloud)
+        else:
+            vtk_cloud = pcd_list_to_vtk(point_cloud)
+
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputData(vtk_cloud)
         mapper.SetColorModeToDirectScalars()
@@ -42,6 +45,10 @@ class PointCloudViewer:
         actor.GetProperty().SetPointSize(1)
         
         self.renderer.AddActor(actor)
+
+    def clear_point_cloud(self):
+        """Clear the displayed pointclouds"""
+        self.renderer.RemoveAllViewProps()
 
     def set_semitransparent_point_cloud(self, point_cloud, opacity=0.1):
         """Set a semi-transparent point cloud to display"""
