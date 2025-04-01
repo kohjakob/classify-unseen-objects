@@ -5,7 +5,7 @@ import albumentations as A
 
 # !!! Do not change the following lines, they are needed for autmatic updating of the project root path !!!
 # PROJECT_ROOT_VARIABLE_MARKER
-PROJECT_ROOT = "/Users/kohjakob/Desktop"
+PROJECT_ROOT = "/home/shared"
 # !!! Do not change the above lines, they are needed for autmatic updating of the project root path !!!
 
 BASE_DIR = PROJECT_ROOT + "/classify-unseen-objects"
@@ -14,8 +14,8 @@ BASE_DIR = PROJECT_ROOT + "/classify-unseen-objects"
 class Paths:
     base_dir: str = BASE_DIR
     scannet_scenes: str = os.path.join(BASE_DIR, "data/scannet/scannet_scenes/")
-    unscene: str = os.path.join(BASE_DIR, "external/UnScene3D")
-    pointmae: str = os.path.join(BASE_DIR, "external/PointMAE")
+    unscene: str = os.path.join(BASE_DIR, "external/UnScene3D/")
+    pointmae: str = os.path.join(BASE_DIR, "external/PointMAE/")
     output: str = os.path.join(BASE_DIR, "output/")
 
     unscene3d_checkpoint: str = os.path.join(BASE_DIR, "data/checkpoints/UnScene3D_DINO_CSC_Pretrained.ckpt")
@@ -28,9 +28,9 @@ class Paths:
     pointmae_config_file_path: str = os.path.join(BASE_DIR, "external/PointMAE/cfgs/finetune_modelnet_8k.yaml")
 
     # Absolute path to the test-split JSON
-    shapenetcore_test_split_json_path = "/home/shared/classify-unseen-objects/data/Shapenetcore_benchmark/test_split.json"
+    shapenetcore_test_split_json_path = os.path.join(BASE_DIR, "data/shapenetcore/Shapenetcore_benchmark/test_split.json")
     # Base directory where the cat IDs (02691156, 03001627, etc.) reside
-    shapenetcore_base_dir = "/home/shared/classify-unseen-objects/data/Shapenetcore_benchmark"
+    shapenetcore_base_dir = os.path.join(BASE_DIR, "data/shapenetcore/Shapenetcore_benchmark")
 
 PATHS = Paths()
 
