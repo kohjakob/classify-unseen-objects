@@ -3,11 +3,9 @@ import torch
 import os
 import sys
 import hydra
-
 from external.UnScene3D.utils.utils import load_checkpoint_with_missing_or_exsessive_keys
 from pipeline_conf.conf import DEVICE, PATHS
-
-sys.path.append(PATHS.unscene)
+sys.path.insert(0, PATHS.unscene)
 
 class InstanceSegmentationModel_UnScene3D(torch.nn.Module):
     def __init__(self):
