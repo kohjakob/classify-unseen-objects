@@ -98,7 +98,7 @@ def main():
 
     plt.legend(loc="best")
     plt.title("2D UMAP of ShapeNet Feature Vectors")
-    plt.savefig("/home/shared/classify-unseen-objects/output/umap_shapenet_features_3.png")
+    plt.savefig("/home/shared/classify-unseen-objects/output/umap_visualization/umap_shapenet_features_3.png")
     plt.show()
 
 if __name__ == "__main__":
