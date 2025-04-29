@@ -52,7 +52,8 @@ def preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scanne
     colors_normalized = np.squeeze(SCANNET_COLOR_NORMALIZE(image=pseudo_image)["image"])
 
     # Voxelization
-    coords = np.floor(points / 0.02)
+    #coords = np.floor(points / 0.02)
+    coords = points
 
     _, _, unique_map, inverse_map = ME.utils.sparse_quantize(
         coordinates=coords, features=colors_normalized, return_index=True, return_inverse=True

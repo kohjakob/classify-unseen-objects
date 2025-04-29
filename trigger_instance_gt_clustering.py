@@ -5,8 +5,10 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import pairwise_distances
 #import hdbscan
 
+
+
 # Find detected scannet instances for which features are annotated
-folder_path = PATHS.scannet_instance_output_dir
+folder_path = PATHS.scannet_gt_instance_output_dir
 feature_extracted_scannet_instances = []
 for entry in os.scandir(folder_path):
     entry = entry.name
@@ -16,7 +18,7 @@ for entry in os.scandir(folder_path):
 instance_dictionary = {}
 
 for scannet_instance in feature_extracted_scannet_instances:
-    data = np.load(os.path.join(PATHS.scannet_instance_output_dir, scannet_instance))
+    data = np.load(os.path.join(PATHS.scannet_gt_instance_output_dir, scannet_instance))
     features = data['features']
 
     print("Features shape:", features.shape)
@@ -36,9 +38,9 @@ hierarchical_clustering = AgglomerativeClustering(n_clusters=None, linkage='comp
 hierarchical_labels = hierarchical_clustering.fit_predict(cosine_distances)
 
 for scannet_instance, cluster_label in zip(feature_extracted_scannet_instances, hierarchical_labels):
-    instance_file = os.path.join(PATHS.scannet_instance_output_dir, scannet_instance)
+    instance_file = os.path.join(PATHS.scannet_gt_instance_output_dir, scannet_instance)
     data = np.load(instance_file)
-    np.savez(instance_file, points=data['points'], features=data['features'], cluster_label=cluster_label)
+    np.savez(instance_file, points=data['points'], features=data['features'], colors=data['colors'], gt_label=data['gt_label'], cluster_label=cluster_label)
 
 print("Labels have been saved back to the corresponding .npz files.")
 

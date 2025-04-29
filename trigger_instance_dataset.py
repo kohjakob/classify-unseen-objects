@@ -54,17 +54,6 @@ def main():
         masks_binary, mask_confidences, label_confidences = filter_scannet_instances(masks_binary, mask_confidences, label_confidences, 0.9)
         masks_binary, mask_confidences, label_confidences = merge_scannet_segments(masks_binary, mask_confidences, label_confidences)
 
-        # Check shape?
-        print(masks_binary.shape)
-        print(mask_confidences.shape)
-        print(label_confidences.shape)
-        """
-        Shapes:
-        (11, 2997516)
-        (11,)
-        (11,)
-        """
-
         instances = []
         # Single out instances using binary mask into list
         for i in range(masks_binary.shape[0]):

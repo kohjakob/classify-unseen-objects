@@ -33,6 +33,7 @@ class Paths:
     shapenetcore_base_dir = os.path.join(BASE_DIR, "data/shapenetcore/Shapenetcore_benchmark")
 
     scannet_instance_output_dir = os.path.join(BASE_DIR, "data/scannet/scannet_instances")
+    scannet_gt_instance_output_dir =  os.path.join(BASE_DIR, "data/scannet/scannet_gt_instances")
 
 PATHS = Paths()
 
