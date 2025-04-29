@@ -3,9 +3,9 @@ import numpy as np
 import umap
 import vtk
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QLabel, QFrame
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QColor
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from scipy.spatial.distance import cosine
@@ -53,6 +53,8 @@ class UMAPPlot(FigureCanvas):
         
         self.ax.legend()
         self.draw()
+        
+        return label_to_color, current_label
 
     def onclick(self, event):
         if event.inaxes is not None and self.embedding is not None:
@@ -75,66 +77,172 @@ class MainWindow(QMainWindow):
         self.viewer2 = PointCloudViewer()
         self.umap_plot = UMAPPlot(main_widget, self.on_umap_point_click)
         
+        # Create descriptive labels
+        self.viewer1_label = QLabel("Isolated Instance")
+        self.viewer1_label.setFont(QFont('Arial', 12, QFont.Bold))
+        self.viewer1_label.setAlignment(Qt.AlignCenter)
+        
+        self.viewer2_label = QLabel("Scan")
+        self.viewer2_label.setFont(QFont('Arial', 12, QFont.Bold))
+        self.viewer2_label.setAlignment(Qt.AlignCenter)
+        
+        self.umap_label = QLabel("UMAP Projection of Feature Space")
+        self.umap_label.setFont(QFont('Arial', 12, QFont.Bold))
+        self.umap_label.setAlignment(Qt.AlignCenter)
+        
+        # Buttons for instance/cluster navigation
         self.next_button = QPushButton('Next (Furthest in Cluster)')
         self.next_button.clicked.connect(self.load_next_instance)
         
         self.next_cluster_button = QPushButton('Next Cluster')
         self.next_cluster_button.clicked.connect(self.load_next_cluster)
         
+        # Buttons for scan navigation
+        self.prev_scan_button = QPushButton('Prev Scan')
+        self.prev_scan_button.clicked.connect(self.load_prev_scan)
+        
+        self.next_scan_button = QPushButton('Next Scan')
+        self.next_scan_button.clicked.connect(self.load_next_scan)
+        
+        # Create a frame for the label info
+        self.info_frame = QFrame()
+        self.info_frame.setFrameShape(QFrame.StyledPanel)
+        self.info_frame.setStyleSheet("background-color: #f0f0f0; border: 1px solid lightgray; border-radius: 5px;")
+        info_layout = QVBoxLayout(self.info_frame)
+        
         self.gt_label_widget = QLabel("Ground Truth Label: None")
         self.gt_label_widget.setFont(QFont('Arial', 12, QFont.Bold))
         self.gt_label_widget.setAlignment(Qt.AlignCenter)
-        self.gt_label_widget.setStyleSheet("background-color: #f0f0f0; padding: 10px; border-radius: 5px;")
-        self.gt_label_widget.setMinimumHeight(40)
-
+        
+        self.cluster_label_widget = QLabel("Cluster: None")
+        self.cluster_label_widget.setFont(QFont('Arial', 12, QFont.Bold))
+        self.cluster_label_widget.setAlignment(Qt.AlignCenter)
+        
+        self.scan_label_widget = QLabel("Scan: None")
+        self.scan_label_widget.setFont(QFont('Arial', 12, QFont.Bold))
+        self.scan_label_widget.setAlignment(Qt.AlignCenter)
+        
+        info_layout.addWidget(self.gt_label_widget)
+        info_layout.addWidget(self.cluster_label_widget)
+        info_layout.addWidget(self.scan_label_widget)
+        
         left_layout = QVBoxLayout()
         right_layout = QVBoxLayout()
-        buttons_layout = QHBoxLayout()
-
-        buttons_layout.addWidget(self.next_button)
-        buttons_layout.addWidget(self.next_cluster_button)
-
-        left_layout.addWidget(self.viewer1.widget)
-        left_layout.addWidget(self.viewer2.widget)
-        left_layout.addWidget(self.gt_label_widget) 
         
+        # Layout for instance/cluster navigation buttons
+        instance_buttons_layout = QHBoxLayout()
+        instance_buttons_layout.addWidget(self.next_button)
+        instance_buttons_layout.addWidget(self.next_cluster_button)
+        
+        # Layout for scan navigation buttons
+        scan_buttons_layout = QHBoxLayout()
+        scan_buttons_layout.addWidget(self.prev_scan_button)
+        scan_buttons_layout.addWidget(self.next_scan_button)
+
+        left_layout.addWidget(self.viewer1_label)
+        left_layout.addWidget(self.viewer1.widget)
+        left_layout.addWidget(self.viewer2_label)
+        left_layout.addWidget(self.viewer2.widget)
+        left_layout.addWidget(self.info_frame)
+        left_layout.addLayout(scan_buttons_layout)
+        
+        right_layout.addWidget(self.umap_label)
         right_layout.addWidget(self.umap_plot)
-        right_layout.addLayout(buttons_layout)
+        right_layout.addLayout(instance_buttons_layout)
 
         layout.addLayout(left_layout)
         layout.addLayout(right_layout)
 
+        # Initialize scan-related variables
+        self.available_scans = self.get_available_scans()
+        self.current_scan_idx = 0
+        
+        # Initialize instance-related variables for the current scan
         self.current_index = 0
         self.current_cluster = None
         self.visited_indices = []
         
-        self.feature_data, self.label_data, self.point_data, self.gt_labels, self.point_colors = self.load_data()
-        self.umap_plot.calculate_umap(self.feature_data)
+        # Load initial data
+        if self.available_scans:
+            self.load_scan_data(self.available_scans[self.current_scan_idx])
         
-        self.select_initial_cluster_point()
-        self.update_view()
+    def get_available_scans(self):
+        """Get a list of available ScanNet scene names from the instance output directory"""
+        scene_names = set()
+        
+        # Find all .npz files in the instance output directory
+        for filename in os.listdir(PATHS.scannet_gt_instance_output_dir):
+            if filename.endswith('.npz'):
+                # Extract scene name (e.g., "scene0007_00" from "scene0007_00_instance_1.npz")
+                parts = filename.split('_')
+                if len(parts) >= 2:
+                    scene_name = f"{parts[0]}_{parts[1]}"
+                    scene_names.add(scene_name)
+        
+        return sorted(list(scene_names))
+
+    def load_scan_data(self, scan_name):
+        """Load all data for a specific scan"""
+        self.feature_data, self.label_data, self.point_data, self.gt_labels, self.point_colors = self.load_data(scan_name)
+        
+        # Reset and recalculate UMAP
+        if len(self.feature_data) > 0:
+            self.umap_plot.calculate_umap(self.feature_data)
+            
+            # Reset current instance/cluster state
+            self.current_index = 0
+            self.current_cluster = None
+            self.visited_indices = []
+            
+            # Initialize with a cluster center
+            self.select_initial_cluster_point()
+            
+            # Update the UI
+            self.update_view()
+            self.scan_label_widget.setText(f"Scan: {scan_name}")
+        else:
+            self.scan_label_widget.setText(f"Scan: {scan_name} (No data)")
+
+    def load_next_scan(self):
+        """Load the next scan in the list"""
+        if not self.available_scans:
+            return
+            
+        self.current_scan_idx = (self.current_scan_idx + 1) % len(self.available_scans)
+        self.load_scan_data(self.available_scans[self.current_scan_idx])
+
+    def load_prev_scan(self):
+        """Load the previous scan in the list"""
+        if not self.available_scans:
+            return
+            
+        self.current_scan_idx = (self.current_scan_idx - 1) % len(self.available_scans)
+        self.load_scan_data(self.available_scans[self.current_scan_idx])
 
     def select_initial_cluster_point(self):
-        if self.current_cluster is None:
+        if self.current_cluster is None and len(self.label_data) > 0:
             unique_clusters = np.unique(self.label_data)
             self.current_cluster = unique_clusters[0]
         
-        cluster_indices = np.where(self.label_data == self.current_cluster)[0]
-        cluster_features = self.feature_data[cluster_indices]
-        centroid = np.mean(cluster_features, axis=0)
-        
-        closest_idx = None
-        min_distance = float('inf')
-        for idx in cluster_indices:
-            # Cosine distance (1 - cosine similarity)
-            distance = cosine(self.feature_data[idx], centroid)
-            if distance < min_distance:
-                min_distance = distance
-                closest_idx = idx
-        
-        if closest_idx is not None:
-            self.current_index = closest_idx
-            self.visited_indices = [closest_idx]
+        if self.current_cluster is not None:
+            cluster_indices = np.where(self.label_data == self.current_cluster)[0]
+            
+            if len(cluster_indices) > 0:
+                cluster_features = self.feature_data[cluster_indices]
+                centroid = np.mean(cluster_features, axis=0)
+                
+                closest_idx = None
+                min_distance = float('inf')
+                for idx in cluster_indices:
+                    # Cosine distance (1 - cosine similarity)
+                    distance = cosine(self.feature_data[idx], centroid)
+                    if distance < min_distance:
+                        min_distance = distance
+                        closest_idx = idx
+                
+                if closest_idx is not None:
+                    self.current_index = closest_idx
+                    self.visited_indices = [closest_idx]
 
     def find_furthest_point(self):
         cluster_indices = np.where(self.label_data == self.current_cluster)[0]
@@ -143,7 +251,8 @@ class MainWindow(QMainWindow):
         if not unvisited:
             self.visited_indices = [self.visited_indices[0]]
             unvisited = [idx for idx in cluster_indices if idx not in self.visited_indices]
-            furthest_idx = None
+        
+        furthest_idx = None
         max_min_distance = -float('inf')
         
         for idx in unvisited:
@@ -161,12 +270,13 @@ class MainWindow(QMainWindow):
 
     def load_next_cluster(self):
         unique_clusters = np.unique(self.label_data)
-        current_idx = np.where(unique_clusters == self.current_cluster)[0][0]
-        next_idx = (current_idx + 1) % len(unique_clusters)
-        self.current_cluster = unique_clusters[next_idx]
-        self.visited_indices = []
-        self.select_initial_cluster_point()
-        self.update_view()
+        if len(unique_clusters) > 0:
+            current_idx = np.where(unique_clusters == self.current_cluster)[0][0]
+            next_idx = (current_idx + 1) % len(unique_clusters)
+            self.current_cluster = unique_clusters[next_idx]
+            self.visited_indices = []
+            self.select_initial_cluster_point()
+            self.update_view()
 
     def random_downsample(self, coords, colors, target_count=1000):
         """
@@ -193,14 +303,19 @@ class MainWindow(QMainWindow):
         
         return downsampled_coords, downsampled_colors
 
-    def load_data(self):
-        #folder_path = PATHS.scannet_instance_output_dir
+    def load_data(self, scan_name=None):
+        if scan_name is None:
+            scan_name = "scene0007_00"  # Default scan name
+        
         folder_path = PATHS.scannet_gt_instance_output_dir
-        #instances = [entry.name for entry in os.scandir(folder_path) if entry.name.endswith('.npz')]
-        instances = [entry.name for entry in os.scandir(folder_path) if entry.name.endswith('.npz') and entry.name.startswith('scene0007_00')]
+        instances = [entry.name for entry in os.scandir(folder_path) 
+                    if entry.name.endswith('.npz') and entry.name.startswith(scan_name)]
+        
+        if not instances:
+            return np.array([]), np.array([]), [], [], []
+        
         features, labels, points, gt_labels, colors = [], [], [], [], []
 
-        scannet_scene_name = ""
         for scannet_instance in instances:
             data = np.load(os.path.join(folder_path, scannet_instance), allow_pickle=True)
             features.append(data['features'])
@@ -213,19 +328,20 @@ class MainWindow(QMainWindow):
                 gt_labels.append(data['gt_label'])
             else:
                 gt_labels.append(data['cluster_label'])
-        
-            scannet_scene_name = scannet_instance[:12]
 
-        scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json = load_scannet_scene(PATHS.scannet_scenes, scannet_scene_name)
-        _, _, inverse_map, coords, colors_normalized, ground_truth_labels = preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json)
+        # Load the scene point cloud
+        scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json = load_scannet_scene(PATHS.scannet_scenes, scan_name)
+        _, _, inverse_map, coords, colors_normalized, ground_truth_labels = preprocess_scannet_scene(
+            scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json)
 
-        coords, colors_normalized = self.random_downsample(coords, colors_normalized, target_count=10000)
+        coords, colors_normalized = self.random_downsample(coords, colors_normalized, target_count=20000)
 
         original_point_cloud = o3d.geometry.PointCloud()
         original_point_cloud.points = o3d.utility.Vector3dVector(coords)
         original_point_cloud.colors = o3d.utility.Vector3dVector(colors_normalized)
         self.background_pointcloud = original_point_cloud
         
+        # Set initial current_cluster
         if labels:
             self.current_cluster = labels[0]
 
@@ -240,12 +356,16 @@ class MainWindow(QMainWindow):
             self.update_view()
 
     def on_umap_point_click(self, index):
-        self.current_index = index
-        self.current_cluster = self.label_data[index]
-        self.visited_indices = [index]
-        self.update_view()
+        if index < len(self.label_data):
+            self.current_index = index
+            self.current_cluster = self.label_data[index]
+            self.visited_indices = [index]
+            self.update_view()
 
     def update_view(self):
+        if not hasattr(self, 'feature_data') or len(self.feature_data) == 0:
+            return
+            
         # Update VTK viewer
         current_points = np.array(self.point_data[self.current_index])
         current_point_colors = np.array(self.point_colors[self.current_index])
@@ -271,15 +391,28 @@ class MainWindow(QMainWindow):
         self.viewer2.renderer.ResetCamera()
         self.viewer2.widget.GetRenderWindow().Render()
     
-        # Update UMAP plot
-        self.umap_plot.plot(self.label_data, self.current_index)
+        # Update UMAP plot and get cluster color mapping
+        label_to_color, current_label = self.umap_plot.plot(self.label_data, self.current_index)
+        
+        # Convert matplotlib RGBA color to hex for HTML
+        if current_label in label_to_color:
+            cluster_color = label_to_color[current_label]
+            hex_color = '#{:02x}{:02x}{:02x}'.format(
+                int(cluster_color[0] * 255), 
+                int(cluster_color[1] * 255), 
+                int(cluster_color[2] * 255)
+            )
+        else:
+            hex_color = '#000000'  # Default black if color not found
         
         # Update the ground truth label widget
         if self.current_index < len(self.gt_labels):
             gt_label_text = self.gt_labels[self.current_index]
-            cluster_info = f"Cluster: {self.current_cluster}"
-            self.gt_label_widget.setText(f"Ground Truth Label: {gt_label_text} | {cluster_info}")
-            self.gt_label_widget.setStyleSheet(f"padding: 10px; border-radius: 5px;")
+            self.gt_label_widget.setText(f"Ground Truth Label: {gt_label_text}")
+            
+            # Update cluster label with colored text
+            self.cluster_label_widget.setText(f"Cluster {self.current_cluster}")
+            self.cluster_label_widget.setStyleSheet(f"color: {hex_color}; font-weight: bold;")
 
 def main():
     app = QApplication([])
