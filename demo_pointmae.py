@@ -6,7 +6,7 @@ import umap.umap_ as umap
 import torch
 from pipeline_conf.conf import PATHS
 from pipeline_models.feature_extraction_model import PointMAE_Wrapper
-from pipeline_gui.utils.pointcloud_utils import random_downsample
+from pipeline_utils.pointcloud_utils import random_downsample
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Demo for showcasing UMAP projection of feature extration with PointMAE on ModelNetCore instance pointclouds:
