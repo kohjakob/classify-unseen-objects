@@ -133,3 +133,41 @@ class PointCloudViewer:
                 return self.add_points(points, color, point_size)
         else:
             raise ValueError(f"Unsupported input_type: {input_type}")
+
+
+class PointCloudView:
+    def __init__(self):
+        self.viewer = PointCloudViewer()
+        self.widget = self.viewer.widget
+        
+    def update_point_cloud(self, *, instance_points, scene_points, instance_colors=None, scene_colors=None, add_axes=False):
+        self.viewer.clear_point_cloud()
+        
+        if scene_points is not None:
+            if scene_colors is not None:
+                self.viewer.set_point_cloud((scene_points, scene_colors), input_type="numpy", colored=True, point_size=1)
+            else:
+                self.viewer.set_point_cloud(scene_points, input_type="numpy", colored=False, point_size=2)
+        
+        if instance_points is not None:
+            if instance_colors is not None:
+                self.viewer.set_point_cloud((instance_points, instance_colors), input_type="numpy", colored=True, point_size=2)
+            else:
+                self.viewer.set_point_cloud(instance_points, input_type="numpy", colored=False, point_size=2)
+        
+        if add_axes:
+            self.viewer.add_coordinate_axes(scale=0.3)
+            
+        self.setup_interaction()
+        
+    def setup_interaction(self):
+        iren = self.widget.GetRenderWindow().GetInteractor()
+        style = vtk.vtkInteractorStyleTrackballCamera()
+        iren.SetInteractorStyle(style)
+        iren.Initialize()
+        self.viewer.renderer.ResetCamera()
+        self.viewer.widget.GetRenderWindow().Render()
+        
+    def set_background_color(self, r, g, b):
+        self.viewer.renderer.SetBackground(r, g, b)
+        self.viewer.widget.GetRenderWindow().Render()
