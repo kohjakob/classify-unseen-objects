@@ -8,7 +8,7 @@ import os
 from pipeline_tasks.scan_loading import load_scannet_scene
 from pipeline_conf.conf import PATHS
 
-from pipeline_models.feature_extraction_model import FeatureExtractionModel_PointMAE
+from pipeline_models.feature_extraction_model import PointMAE_Wrapper
 
 def random_downsample(points, target_count=8912):
     if len(points) <= target_count:
@@ -74,7 +74,7 @@ def load_scannet_gt_instances(scannet_scene_name, scannet_scenes_path):
 
 def main():
     # Initialize the feature extraction model
-    model_pointmae = FeatureExtractionModel_PointMAE() 
+    model_pointmae = PointMAE_Wrapper() 
 
     # Find which scannet scenes are downloaded
     folder_path = os.path.join(PATHS.base_dir, "data/scannet/scannet_scenes")

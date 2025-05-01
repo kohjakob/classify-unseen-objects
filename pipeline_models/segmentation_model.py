@@ -7,7 +7,7 @@ from external.UnScene3D.utils.utils import load_checkpoint_with_missing_or_exses
 from pipeline_conf.conf import DEVICE, PATHS
 sys.path.insert(0, PATHS.unscene)
 
-class InstanceSegmentationModel_UnScene3D(torch.nn.Module):
+class Unscene3D_Wrapper(torch.nn.Module):
     def __init__(self):
         super().__init__()
         
