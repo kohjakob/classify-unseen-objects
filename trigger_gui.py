@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 
-from pipeline_gui.models.scan_data_model import DataModel
+from pipeline_gui.models.data_model import DataModel
 from pipeline_gui.views.main_view import MainView
 from pipeline_gui.controllers.view_controller import ScanViewController
 
