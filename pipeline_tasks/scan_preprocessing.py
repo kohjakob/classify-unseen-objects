@@ -5,7 +5,7 @@ import MinkowskiEngine as ME
 from pipeline_conf.conf import DEVICE, SCANNET_COLOR_NORMALIZE
 from external.UnScene3D.datasets.scannet200.scannet200_constants import CLASS_LABELS_200
 
-def preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json):
+def preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json, voxelization=False):
     """
     Preprocess loaded ScanNet scene data including mesh, segmentations, and aggregations.
 
@@ -13,6 +13,7 @@ def preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scanne
         scannet_scene_mesh (open3d.geometry.TriangleMesh): The loaded mesh.
         scannet_scene_segs_json (dict): The loaded segmentations data.
         scannet_scene_aggr_json (dict): The loaded aggregations data.
+        voxelization (bool): Whether to apply voxelization.
 
     Returns:
         ME.SparseTensor: The processed sparse tensor.
@@ -52,8 +53,10 @@ def preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scanne
     colors_normalized = np.squeeze(SCANNET_COLOR_NORMALIZE(image=pseudo_image)["image"])
 
     # Voxelization
-    #coords = np.floor(points / 0.02)
-    coords = points
+    if voxelization:
+        coords = np.floor(points / 0.02)
+    else:
+        coords = points
 
     _, _, unique_map, inverse_map = ME.utils.sparse_quantize(
         coordinates=coords, features=colors_normalized, return_index=True, return_inverse=True

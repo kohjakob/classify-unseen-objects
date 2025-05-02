@@ -7,13 +7,13 @@ import open3d as o3d
 from pipeline_conf.conf import PATHS
 from pipeline_tasks.scan_loading import load_scannet_scene
 from pipeline_tasks.scan_preprocessing import preprocess_scannet_scene
-from pipeline_gui.utils.os_utils import get_available_scannet_scenes
-from pipeline_gui.utils.pointcloud_utils import random_downsample
+from pipeline_utils.data_utils import list_available_scannet_scenes_from_scannet_scenes
+from pipeline_utils.pointcloud_utils import random_downsample
 
 class DataModel:
-    def __init__(self):
-        # Config state
-        self.used_instances = "scannet-gt"
+    def __init__(self, instance_detection_mode):
+        # Config state       
+        self.instance_detection_mode = instance_detection_mode
 
         # Logic state
         self.instance_features = np.array([])
@@ -26,7 +26,7 @@ class DataModel:
         self.umap_embedding = None
 
         # GUI navigation state
-        self.available_scannet_scenes = get_available_scannet_scenes()
+        self.available_scannet_scenes = list_available_scannet_scenes_from_scannet_scenes()
         self.current_scene_idx = 0
         self.current_cluster = None
         self.current_cluster_index = 0
@@ -46,7 +46,13 @@ class DataModel:
         self.scene_points, self.scene_colors = random_downsample(20000, scene_points, scene_colors)
 
         # Load instance data
-        scannet_instance_path = PATHS.scannet_gt_instance_output_dir
+        if self.instance_detection_mode == "gt":
+            scannet_instance_path = PATHS.scannet_gt_instance_output_dir
+        elif self.instance_detection_mode == "unscene3d":
+            scannet_instance_path = PATHS.scannet_instance_output_dir
+        else:
+            raise NotImplementedError()
+    
         instances = [entry.name for entry in os.scandir(scannet_instance_path) 
                      if entry.name.endswith('.npz') and entry.name.startswith(scene_name)]
         
@@ -61,10 +67,8 @@ class DataModel:
             
             self.instance_points.append(data['points'])
             self.instance_colors.append(data['colors'])
-            if self.used_instances == "scannet-gt":
-                self.instance_gt_labels.append(data['gt_label'])
-            else:
-                self.instance_gt_labels.append(data['cluster_label'])
+            self.instance_gt_labels.append(data['gt_label'])
+        
     
         self.instance_features = np.array(features_list)
         self.instance_labels = np.array(labels_list)

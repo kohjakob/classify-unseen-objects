@@ -1,6 +1,5 @@
 import vtk
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-from ..utils.vtk_utils import o3d_pcd_to_vtk, pcd_list_to_vtk
 import os
 import numpy as np
 

@@ -181,15 +181,14 @@ def generate_distinct_colors(n):
     return np.array(colors)
 
 def main():
-    # Instantiate model and process scene
-    model = Unscene3D_Wrapper()
-    scannet_scene_name = 'scene0000_00'
+    model_unscene3d = Unscene3D_Wrapper()
     
-    # Load and process scene
+    # ======= Load and process scene =======
+    scannet_scene_name = 'scene0000_00'
     scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json = load_scannet_scene(PATHS.scannet_scenes, scannet_scene_name)
     data, features, inverse_map, coords, colors_normalized, ground_truth_labels = preprocess_scannet_scene(
         scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json, voxelization=True)
-    outputs = segment_scannet_scene(model, data, features)
+    outputs = segment_scannet_scene(model_unscene3d, data, features)
     masks_binary, mask_confidences, label_confidences = postprocess_scannet_segments(
         outputs, inverse_map, coords, colors_normalized, ground_truth_labels)
     masks_binary, mask_confidences, label_confidences = merge_scannet_segments(
@@ -197,7 +196,7 @@ def main():
     masks_binary, mask_confidences, label_confidences = filter_scannet_instances(
         masks_binary, mask_confidences, label_confidences, 0.9)
     
-    # Launch visualization
+    # ======= Start GUI =======
     app = QApplication(sys.argv)
     window = VisualizationWindow(coords, colors_normalized, masks_binary)
     window.show()

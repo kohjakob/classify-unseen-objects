@@ -13,7 +13,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # ModelNetCore Classes: Airplane, Bag, Cap, Car, Chair, Earphone, Guitar, Knife, Lamp, Laptop
 
 def main():
-    # Load samples of each class from ModelNetCore
+    model_pointmae = PointMAE_Wrapper()
+    
+    # ======= Load samples of each class from ModelNetCore =======
     modelnet_sample_classes = ["Airplain", "Bag", "Car", "Chair", "Lamp"]
     modelnet_sample_count = 20
     with open(PATHS.shapenetcore_test_split_json_path, "r") as f:
@@ -28,10 +30,7 @@ def main():
             "class_name": sample[1], 
             "relative_npy_path": sample[2]})
 
-    # Instantiate PointMAE
-    pointmae = PointMAE_Wrapper()
-
-    # Iterate over samples and extract features
+    # ======= Iterate over samples and extract features =======
     features = []
     modelnet_gt_class_labels = []
 
@@ -44,7 +43,7 @@ def main():
         points_tensor = torch.from_numpy(np.expand_dims(points_downsampled, axis=0)).to(device)
 
         with torch.no_grad():
-            output = pointmae.forward(points_tensor)
+            output = model_pointmae.forward(points_tensor)
         output = output.cpu().numpy().squeeze(0)
         features.append(output)
 
@@ -52,10 +51,11 @@ def main():
 
     features = np.array(features)
   
-    # Project and plot UMAP
+    # ======= Project UMAP =======
     umap_reducer = umap.UMAP(n_components=2)
     umap_embedding = umap_reducer.fit_transform(features)
 
+    # ======= Plot UMAP =======
     plt.figure(figsize=(6, 5))
     plt.title("UMAP projection of feature extration with PointMAE on ModelNetCore instance pointclouds")
     plt.legend(loc="best")
