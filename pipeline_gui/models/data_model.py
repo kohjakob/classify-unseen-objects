@@ -42,7 +42,7 @@ class DataModel:
 
         # Load scene data
         scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json = load_scannet_scene(PATHS.scannet_scenes, scene_name)
-        _, _, _, scene_points, scene_colors, _ = preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json)
+        _, _, _, scene_points, scene_colors, _ = preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json, voxelization=False)
         self.scene_points, self.scene_colors = random_downsample(20000, scene_points, scene_colors)
 
         # Load instance data

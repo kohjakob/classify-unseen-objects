@@ -4,3 +4,6 @@
 [submodule "external/UnScene3D"]
 	path = external/UnScene3D
 	url = https://github.com/kohjakob/UnScene3D.git
+[submodule "external/SegmentAnything3D"]
+	path = external/SegmentAnything3D
+	url = https://github.com/kohjakob/SegmentAnything3D.git

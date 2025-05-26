@@ -1,5 +1,16 @@
 import sys
+import os
+
+# WICHTIG: OpenCVs eigenes Qt-Plugin-Verzeichnis darf nicht verwendet werden
+cv2_plugin_path = os.path.join(os.environ["CONDA_PREFIX"], "lib", "python3.10", "site-packages", "cv2", "qt", "plugins")
+if "QT_QPA_PLATFORM_PLUGIN_PATH" in os.environ and os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] == cv2_plugin_path:
+    del os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"]
+
+# Danach PyQt5 importieren
 from PyQt5.QtWidgets import QApplication
+
+# Dann erst cv2
+import cv2
 
 from pipeline_gui.models.data_model import DataModel
 from pipeline_gui.views.main_view import MainView
