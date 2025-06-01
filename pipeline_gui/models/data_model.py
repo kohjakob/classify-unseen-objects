@@ -2,20 +2,18 @@ import os
 import numpy as np
 import umap
 from scipy.spatial.distance import cosine
-import open3d as o3d
 
-from pipeline_conf.conf import PATHS
-from pipeline_tasks.scan_loading import load_scannet_scene
-from pipeline_tasks.scan_preprocessing import preprocess_scannet_scene
-from pipeline_utils.data_utils import list_available_scannet_scenes_from_scannet_scenes
+from pipeline_conf.conf import CONFIG
+from pipeline_utils.data_utils import list_available_scannet_scenes, load_scannet_scene_data
 from pipeline_utils.pointcloud_utils import random_downsample
 
 class DataModel:
     def __init__(self, instance_detection_mode):
-        # Config state       
+        # Config       
         self.instance_detection_mode = instance_detection_mode
+        self.instances_dir = CONFIG.instance_detection_mode_dict[instance_detection_mode]["output_dir"]
 
-        # Logic state
+        # Logic
         self.instance_features = np.array([])
         self.instance_labels = np.array([])
         self.instance_points = []
@@ -25,73 +23,66 @@ class DataModel:
         self.scene_colors = []
         self.umap_embedding = None
 
-        # GUI navigation state
-        self.available_scannet_scenes = list_available_scannet_scenes_from_scannet_scenes()
+        # GUI
+        self.available_scannet_scenes = list_available_scannet_scenes()
+        self.current_scene_idx = 0
+        self.current_cluster = None
+        self.current_cluster_index = 0
+        self.visited_cluster_indices = []
+
+    def reset(self):
+        # Reset all state variables
+        self.instance_features = np.array([])
+        self.instance_labels = np.array([])
+        self.instance_points = []
+        self.instance_colors = []
+        self.instance_gt_labels = []
+        self.scene_points = []
+        self.scene_colors = []
+        self.umap_embedding = None
         self.current_scene_idx = 0
         self.current_cluster = None
         self.current_cluster_index = 0
         self.visited_cluster_indices = []
         
-    def load_scannet_scene_data(self, scene_name):
-        """Load scan and instances for a specific scan_name from ScanNet dataset"""
-        
-        # Reset GUI navigation state
-        self.current_cluster_index = 0
-        self.current_cluster = None
-        self.visited_cluster_indices = []
+    def load_scannet_scene_data(self, scene_name):        
+        self.reset()
 
         # Load scene data
-        scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json = load_scannet_scene(PATHS.scannet_scenes, scene_name)
-        _, _, _, scene_points, scene_colors, _ = preprocess_scannet_scene(scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json, voxelization=False)
-        self.scene_points, self.scene_colors = random_downsample(20000, scene_points, scene_colors)
-
-        # Load instance data
-        if self.instance_detection_mode == "gt":
-            scannet_instance_path = PATHS.scannet_gt_instance_output_dir
-        elif self.instance_detection_mode == "unscene3d":
-            scannet_instance_path = PATHS.scannet_instance_output_dir
-        else:
-            raise NotImplementedError()
+        self.scene_points, self.scene_colors, gt_labels = load_scannet_scene_data(scene_name)
+        self.scene_points, self.scene_colors = random_downsample(5000, self.scene_points, self.scene_colors)
     
-        instances = [entry.name for entry in os.scandir(scannet_instance_path) 
-                     if entry.name.endswith('.npz') and entry.name.startswith(scene_name)]
-        
-        features_list = []
-        labels_list = []
-
-        for scannet_instance in instances:
-            data = np.load(os.path.join(scannet_instance_path, scannet_instance), allow_pickle=True)
-            
-            features_list.append(data['features'])
-            labels_list.append(data['cluster_label'])
-            
-            self.instance_points.append(data['points'])
-            self.instance_colors.append(data['colors'])
-            self.instance_gt_labels.append(data['gt_label'])
-        
-    
-        self.instance_features = np.array(features_list)
-        self.instance_labels = np.array(labels_list)
+        # Load instances data
+        instance_features = []
+        instance_labels = []
+        for instance in  [e.name for e in os.scandir(self.instances_dir) if e.name.endswith('.npz') and e.name.startswith(scene_name)]:
+            instance_data = np.load(os.path.join(self.instances_dir, instance), allow_pickle=True)
+            instance_features.append(instance_data['features'])
+            instance_labels.append(instance_data['cluster_label'])
+            self.instance_points.append(instance_data['points'])
+            self.instance_colors.append(instance_data['colors'])
+            self.instance_gt_labels.append(instance_data['gt_label'])
+        self.instance_features = np.array(instance_features)
+        self.instance_labels = np.array(instance_labels)
 
         # Calculate UMAP embedding
-        self.calculate_umap()
-        
-        # Set initial cluster
+        reducer = umap.UMAP()
+        self.umap_embedding = reducer.fit_transform(self.instance_features)
+
+        # Set cluster selection state
         self.current_cluster = np.unique(self.instance_labels)[0]
-        self.select_initial_cluster_point()
+        self.select_cluster_point()
 
         return True
     
-    def calculate_umap(self):
-        """Calculate UMAP embedding for the feature data"""
-        reducer = umap.UMAP()
-        self.umap_embedding = reducer.fit_transform(self.instance_features)
-    
-    def select_initial_cluster_point(self):
+    def select_cluster_point(self):
+        # If no current cluster, select first
         if self.current_cluster is None and len(self.instance_labels) > 0:
             unique_clusters = np.unique(self.instance_labels)
             self.current_cluster = unique_clusters[0]
         
+        # If current cluster selected, select element from same cluster with 
+        # element closest to current centroid
         if self.current_cluster is not None:
             cluster_indices = np.where(self.instance_labels == self.current_cluster)[0]
             
@@ -113,7 +104,7 @@ class DataModel:
                     self.visited_cluster_indices = [closest_idx]
     
     def find_furthest_point(self):
-        """Find the furthest unvisited point in the current cluster"""
+        # Find the furthest point in the current cluster from the visited points
         cluster_indices = np.where(self.instance_labels == self.current_cluster)[0]
         unvisited = [idx for idx in cluster_indices if idx not in self.visited_cluster_indices]
         
@@ -159,7 +150,7 @@ class DataModel:
             next_idx = (current_idx + 1) % len(unique_clusters)
             self.current_cluster = unique_clusters[next_idx]
             self.visited_cluster_indices = []
-            self.select_initial_cluster_point()
+            self.select_cluster_point()
             return True
         return False
     

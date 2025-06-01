@@ -12,6 +12,8 @@ def random_downsample(target_array_length=1000, *arrays):
     Returns:
         List of downsampled arrays with the same random indices applied to all
     """
+    np.random.seed(42)  # For reproducibility
+
     if not arrays:
         return []
     

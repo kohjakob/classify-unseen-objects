@@ -24,30 +24,6 @@ class ViewController:
             self.model.load_scannet_scene_data(self.model.available_scannet_scenes[0])
             self.update_view()
         
-    def handle_next_instance(self):
-        if self.model.move_to_next_instance():
-            self.update_view()
-    
-    def handle_next_cluster(self):
-        if self.model.move_to_next_cluster():
-            self.update_view()
-    
-    def handle_prev_scan(self):
-        if self.model.move_to_previous_scan():
-            self.update_view()
-    
-    def handle_next_scan(self):
-        if self.model.move_to_next_scan():
-            self.update_view()
-    
-    def handle_umap_click(self, x, y):
-        if self.model.umap_embedding is not None:
-            # Find closest point in the UMAP embedding
-            distances = np.linalg.norm(self.model.umap_embedding - np.array([x, y]), axis=1)
-            closest_index = np.argmin(distances)
-            
-            if self.model.select_point(closest_index):
-                self.update_view()
     
     def update_view(self):
         # Update point cloud views
@@ -92,3 +68,28 @@ class ViewController:
         
         self.view.info_panel.update_gt_label(self.model.get_current_gt_label())
         self.view.info_panel.update_scan_label(self.model.get_current_scan_name())
+
+    def handle_next_instance(self):
+        if self.model.move_to_next_instance():
+            self.update_view()
+    
+    def handle_next_cluster(self):
+        if self.model.move_to_next_cluster():
+            self.update_view()
+    
+    def handle_prev_scan(self):
+        if self.model.move_to_previous_scan():
+            self.update_view()
+    
+    def handle_next_scan(self):
+        if self.model.move_to_next_scan():
+            self.update_view()
+    
+    def handle_umap_click(self, x, y):
+        if self.model.umap_embedding is not None:
+            # Find closest point in the UMAP embedding
+            distances = np.linalg.norm(self.model.umap_embedding - np.array([x, y]), axis=1)
+            closest_index = np.argmin(distances)
+            
+            if self.model.select_point(closest_index):
+                self.update_view()

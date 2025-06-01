@@ -52,6 +52,8 @@ class PointCloudViewer:
         for i, (point, color) in enumerate(zip(points, colors)):
             point_id = vtk_points.InsertNextPoint(point)
             vtk_cells.InsertNextCell(1, [point_id])
+
+            color = [color[2], color[1], color[0]]  # BGR to RGB
             vtk_colors.InsertNextTuple3(int(color[0]*255), int(color[1]*255), int(color[2]*255))
         
         # Create a polydata object
@@ -71,7 +73,7 @@ class PointCloudViewer:
         
         self.renderer.AddActor(actor)
         return actor
-    
+
     def add_points(self, points, color, point_size=1, opacity=1):
         """Add points with set color to the renderer"""
         if len(points) == 0:
@@ -97,6 +99,8 @@ class PointCloudViewer:
         
         actor = vtk.vtkActor()
         actor.SetMapper(mapper)
+        color = [color[2], color[1], color[0]]  # BGR to RGB
+
         actor.GetProperty().SetColor(color)
         actor.GetProperty().SetOpacity(opacity)
         actor.GetProperty().SetPointSize(point_size)
@@ -146,7 +150,7 @@ class PointCloudView:
             if scene_colors is not None:
                 self.viewer.set_point_cloud((scene_points, scene_colors), input_type="numpy", colored=True, point_size=1)
             else:
-                self.viewer.set_point_cloud(scene_points, input_type="numpy", colored=False, point_size=2)
+                self.viewer.set_point_cloud(scene_points, input_type="numpy", colored=False, point_size=1)
         
         if instance_points is not None:
             if instance_colors is not None:
@@ -154,9 +158,7 @@ class PointCloudView:
             else:
                 self.viewer.set_point_cloud(instance_points, input_type="numpy", colored=False, point_size=2)
         
-        if add_axes:
-            self.viewer.add_coordinate_axes(scale=0.3)
-            
+        self.viewer.add_coordinate_axes(scale=0.3)
         self.setup_interaction()
         
     def setup_interaction(self):
@@ -164,7 +166,7 @@ class PointCloudView:
         style = vtk.vtkInteractorStyleTrackballCamera()
         iren.SetInteractorStyle(style)
         iren.Initialize()
-        self.viewer.renderer.ResetCamera()
+        #self.viewer.renderer.ResetCamera()
         self.viewer.widget.GetRenderWindow().Render()
         
     def set_background_color(self, r, g, b):

@@ -1,17 +1,35 @@
+# Set cuda environment variables
+import os
+# Project paths
+os.environ["PROJECT_ROOT"] = "/home/shared/"
+os.environ["CONDA_ROOT"] = "/home/shared/miniconda3"
+os.environ["CONDA_DEFAULT_ENV"] = "classify-unseen-objects"
+os.environ["CONDA_PYTHON_EXE"] = f"{os.environ['CONDA_ROOT']}/bin/python"
+os.environ["CONDA_PREFIX"] = f"{os.environ['CONDA_ROOT']}/envs/classify-unseen-objects"
+os.environ["CONDA_PREFIX_1"] = f"{os.environ['CONDA_ROOT']}/miniconda3"
+# CUDA paths and settings
+os.environ["CUDA_HOME"] = f"{os.environ['PROJECT_ROOT']}/cuda-11.6/toolkit"
+os.environ["LD_LIBRARY_PATH"] = f"{os.environ['PROJECT_ROOT']}/cuda-11.6/toolkit/lib64"
+os.environ["CUDNN_LIB_DIR"] = f"{os.environ['PROJECT_ROOT']}/cuda-11.6/toolkit/lib64"
+os.environ["TORCH_CUDA_ARCH_LIST"] = "6.0;7.0;7.5"
+# Compiler settings
+os.environ["CXX"] = "g++-9"
+os.environ["CC"] = "gcc-9"
+# Update PATH to include CUDA binaries
+os.environ["PATH"] = f"{os.environ['CUDA_HOME']}/bin:{os.environ.get('PATH', '')}"
+
 import sys
 import numpy as np
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
 import vtk
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-from pipeline_tasks.scan_loading import load_scannet_scene
-from pipeline_tasks.scan_preprocessing import preprocess_scannet_scene
-from pipeline_tasks.scan_segmentation import segment_scannet_scene
-from pipeline_tasks.segments_postprocessing import postprocess_scannet_segments
-from pipeline_tasks.segments_merging import merge_scannet_segments
-from pipeline_tasks.instances_filtering import filter_scannet_instances
-from pipeline_models.segmentation_model import Unscene3D_Wrapper
-from pipeline_conf.conf import PATHS
+from pipeline_models.sai3d_wrapper import SAI3D_Wrapper
+from pipeline_models.unscene3d_wrapper import UnScene3D_Wrapper
+from pipeline_conf.conf import CONFIG
+from pipeline_utils.data_utils import load_scannet_gt_instances, load_scannet_scene_data, load_scannet_scene_data_open3d
+
+# Demo for showcasing instance detection with UnScene3D and SAI3D on ScanNet scenes.
 
 class PointCloudViewer:
     def __init__(self):
@@ -41,7 +59,7 @@ class PointCloudViewer:
             point_id = vtk_points.InsertNextPoint(point)
             vtk_cells.InsertNextCell(1, [point_id])
             # Convert normalized colors [0-1] to [0-255]
-            r, g, b = int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)
+            r, g, b = color[0], color[1], color[2]
             vtk_colors.InsertNextTuple3(r, g, b)
         
         polydata = vtk.vtkPolyData()
@@ -59,7 +77,7 @@ class PointCloudViewer:
         return actor
 
 class VisualizationWindow(QMainWindow):
-    def __init__(self, coords, colors_original, instance_masks):
+    def __init__(self, points, colors, instances):
         super().__init__()
 
         self.setWindowTitle("Point Cloud Visualization")
@@ -73,12 +91,12 @@ class VisualizationWindow(QMainWindow):
         vis_layout.addWidget(self.viewer1.widget)
         vis_layout.addWidget(self.viewer2.widget)
         layout.addLayout(vis_layout)
-        self.setup_visualization(coords, colors_original, instance_masks)
+        self.setup_visualization(points, colors, instances)
         self.setMinimumSize(1300, 600)
 
-    def setup_visualization(self, coords, colors_original, instance_masks):
-        self.viewer1.add_colored_points(coords, colors_original, point_size=2)
-        instance_points, instance_colors = self.create_instance_colored_points(coords, colors_original, instance_masks)
+    def setup_visualization(self, points, colors, instances):
+        self.viewer1.add_colored_points(points, colors, point_size=2)
+        instance_points, instance_colors = self.create_instance_colored_points(points, colors, instances)
         self.viewer2.add_colored_points(instance_points, instance_colors, point_size=3)
 
         self.viewer1.add_coordinate_axes(scale=0.3)
@@ -89,25 +107,28 @@ class VisualizationWindow(QMainWindow):
 
         self.setup_interactors()
 
-    def create_instance_colored_points(self, coords, colors_original, instance_masks):
+    def create_instance_colored_points(self, points, colors, instances):
 
-        num_instances = len(instance_masks)
+        num_instances = len(instances)
         instance_color_map = generate_distinct_colors(num_instances)
 
-        combined_mask = np.zeros(len(coords), dtype=bool)
-        for mask in instance_masks:
-            combined_mask = combined_mask | mask
-        foreground_points = coords[combined_mask]
+        combined_mask = np.zeros(len(points), dtype=bool)
+
+        print(len(instance["binary_mask"]) for instance in instances)
+        for instance in instances:
+            combined_mask = combined_mask | instance["binary_mask"]
+
+        foreground_points = points[combined_mask]
         foreground_colors = np.zeros((len(foreground_points), 3))
         fg_indices = np.where(combined_mask)[0]
         fg_map = {orig: i for i, orig in enumerate(fg_indices)}
-        for i, mask in enumerate(instance_masks):
-            if np.any(mask):
-                instance_indices = np.where(mask)[0]
+        for i, instance in enumerate(instances):
+            if np.any(instance["binary_mask"]):
+                instance_indices = np.where(instance["binary_mask"])[0]
                 mapped_indices = [fg_map[idx] for idx in instance_indices if idx in fg_map]
                 foreground_colors[mapped_indices] = instance_color_map[i]
 
-        background_points = coords[~combined_mask]
+        background_points = points[~combined_mask]
         background_color = np.ones((len(background_points), 3)) * 0.5
 
         all_points = np.vstack([foreground_points, background_points])
@@ -178,27 +199,31 @@ def generate_distinct_colors(n):
             
         colors.append(np.array([r + m, g + m, b + m]))
     
-    return np.array(colors)
+    colors = np.array(colors) * 255
+    return colors
 
 def main():
-    model_unscene3d = Unscene3D_Wrapper()
-    
-    # ======= Load and process scene =======
-    scannet_scene_name = 'scene0000_00'
-    scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json = load_scannet_scene(PATHS.scannet_scenes, scannet_scene_name)
-    data, features, inverse_map, coords, colors_normalized, ground_truth_labels = preprocess_scannet_scene(
-        scannet_scene_mesh, scannet_scene_segs_json, scannet_scene_aggr_json, voxelization=True)
-    outputs = segment_scannet_scene(model_unscene3d, data, features)
-    masks_binary, mask_confidences, label_confidences = postprocess_scannet_segments(
-        outputs, inverse_map, coords, colors_normalized, ground_truth_labels)
-    masks_binary, mask_confidences, label_confidences = merge_scannet_segments(
-        masks_binary, mask_confidences, label_confidences)
-    masks_binary, mask_confidences, label_confidences = filter_scannet_instances(
-        masks_binary, mask_confidences, label_confidences, 0.9)
-    
-    # ======= Start GUI =======
+    # Check command line arguments
+    if len(sys.argv) < 2 or sys.argv[1] not in CONFIG.instance_detection_mode_dict:
+        print("Usage: python3 show_unscene3d_instances.py <instance_detection_mode>")
+        print("Available instance detection modes:", list(CONFIG.instance_detection_mode_dict.keys()))
+        sys.exit(1)
+
+    scene_name = 'scene0000_00'
+    points, colors, gt_labels = load_scannet_scene_data(scene_name)
+
+    instance_detection_mode = CONFIG.instance_detection_mode_dict[sys.argv[1]]["name"]
+    if instance_detection_mode == CONFIG.instance_detection_mode_dict["unscene3d"]["name"]:
+        unscene3d_wrapper = UnScene3D_Wrapper()
+        instances = unscene3d_wrapper.detect_instances(points, colors)
+    elif instance_detection_mode == CONFIG.instance_detection_mode_dict["sai3d"]["name"]:
+        sai3d_wrapper = SAI3D_Wrapper()
+        instances = sai3d_wrapper.detect_instances(points, colors, scene_name)
+    elif instance_detection_mode == CONFIG.instance_detection_mode_dict["gt"]["name"]:
+        instances = load_scannet_gt_instances(scene_name)
+
     app = QApplication(sys.argv)
-    window = VisualizationWindow(coords, colors_normalized, masks_binary)
+    window = VisualizationWindow(points, colors, instances)
     window.show()
     sys.exit(app.exec_())
 

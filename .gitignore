@@ -18,3 +18,8 @@ data/scannet/*
 
 data/shapenetcore/*
 !data/shapenetcore/.gitkeep
+
+data/checkpoints/*
+!data/checkpoints/.gitkeep
+
+classify_unseen_objects.egg-info/

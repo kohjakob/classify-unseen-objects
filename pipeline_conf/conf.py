@@ -11,11 +11,15 @@ PROJECT_ROOT = "/home/shared"
 BASE_DIR = PROJECT_ROOT + "/classify-unseen-objects"
 
 @dataclass
-class Paths:
+class Config:
     base_dir: str = BASE_DIR
-    scannet_scenes: str = os.path.join(BASE_DIR, "data/scannet/scannet_scenes/")
+    scannet_dir: str = os.path.join(BASE_DIR, "data/scannet/scannet_scenes/")
+    
     unscene: str = os.path.join(BASE_DIR, "external/UnScene3D/")
     pointmae: str = os.path.join(BASE_DIR, "external/PointMAE/")
+    sai3d: str = os.path.join(BASE_DIR, "external/SAI3D/")
+    semanticsam = os.path.join(BASE_DIR, "external/SAI3D/Semantic-SAM/")
+
     output: str = os.path.join(BASE_DIR, "output/")
 
     unscene3d_checkpoint: str = os.path.join(BASE_DIR, "data/checkpoints/UnScene3D_DINO_CSC_Pretrained.ckpt")
@@ -32,10 +36,42 @@ class Paths:
     # Base directory where the cat IDs (02691156, 03001627, etc.) reside
     shapenetcore_base_dir = os.path.join(BASE_DIR, "data/shapenetcore/Shapenetcore_benchmark")
 
-    scannet_instance_output_dir = os.path.join(BASE_DIR, "data/scannet/scannet_instances_unscene3d")
+    scannet_unscene3d_instance_output_dir = os.path.join(BASE_DIR, "data/scannet/scannet_instances_unscene3d")
+    scannet_sai3d_instance_output_dir = os.path.join(BASE_DIR, "data/scannet/scannet_instances_sai3d")
     scannet_gt_instance_output_dir =  os.path.join(BASE_DIR, "data/scannet/scannet_instances_gt")
 
-PATHS = Paths()
+
+    sai3d_sam_checkpoint = os.path.join(BASE_DIR, "data/checkpoints/swinl_only_sam_many2many.pth")
+
+
+    instance_detection_mode_dict = {    
+        "gt": {
+            "name": "gt",
+            "output_dir": scannet_gt_instance_output_dir,
+        },
+        "unscene3d": {
+            "name": "unscene3d",
+            "output_dir": scannet_unscene3d_instance_output_dir,
+        },
+        "sai3d": {
+            "name": "sai3d",
+            "output_dir": scannet_sai3d_instance_output_dir,
+        }
+    }
+
+    feature_extraction_mode_dict = {
+        "pointmae": {
+            "name": "pointmae",
+        }
+    }
+
+    clustering_mode_dict = {
+        "hierarchical": {
+            "name": "hierarchical",
+        }
+    }
+
+CONFIG = Config()
 
 DEVICE = "cuda"
 MAX_BATCH_SIZE = 32
