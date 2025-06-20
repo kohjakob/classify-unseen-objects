@@ -7,3 +7,6 @@
 [submodule "external/SAI3D"]
 	path = external/SAI3D
 	url = https://github.com/kohjakob/SAI3D.git
+[submodule "external/ScanNet"]
+	path = external/ScanNet
+	url = https://github.com/kohjakob/ScanNet.git
