@@ -10,6 +10,7 @@ fi
 # Set the PROJECT_ROOT and output directory variables
 PROJECT_ROOT=$1
 OUTPUT_DIR="$PROJECT_ROOT/classify-unseen-objects/data/scannet/scannet_scenes"
+SENSREADER_DIR="$PROJECT_ROOT/classify-unseen-objects/external/ScanNet/SensReader/python"
 
 # Get the start and stop scene arguments
 START_SCENE=$2
@@ -37,7 +38,7 @@ do
         if [ ! -d "$POSED_IMAGES_DIR/intrinsic" ]; then
             echo "  Extracting posed images from ${SENS_FILE} into ${POSED_IMAGES_DIR}..."
             mkdir -p "$POSED_IMAGES_DIR"
-            python2 $PROJECT_ROOT/ScanNet/SensReader/python/reader.py \
+            python2 $SENSREADER_DIR/reader.py \
                 --filename "$SENS_FILE" \
                 --output_path "$POSED_IMAGES_DIR" \
                 --export_color_images \

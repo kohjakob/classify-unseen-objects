@@ -10,6 +10,7 @@ fi
 # Set the PROJECT_ROOT and output directory variables
 PROJECT_ROOT=$1
 OUTPUT_DIR="$PROJECT_ROOT/classify-unseen-objects/data/scannet/scannet_scenes"
+SENSREADER_DIR="$PROJECT_ROOT/classify-unseen-objects/external/ScanNet/SensReader/python"
 
 # Get the start and stop scene arguments
 START_SCENE=$2
@@ -44,7 +45,7 @@ do
     if [ ! -d "$COLOR_DIR" ] || [ -z "$(ls -A $COLOR_DIR 2>/dev/null)" ]; then
         echo "  Extracting color images..."
         mkdir -p "$COLOR_DIR"
-        python2 $PROJECT_ROOT/ScanNet/SensReader/python/reader.py \
+        python2 $SENSREADER_DIR/reader.py \
             --filename "$SENS_FILE" \
             --output_path "$POSED_IMAGES_DIR" \
             --export_color_images
@@ -56,7 +57,7 @@ do
     if [ ! -d "$DEPTH_DIR" ] || [ -z "$(ls -A $DEPTH_DIR 2>/dev/null)" ]; then
         echo "  Extracting depth images..."
         mkdir -p "$DEPTH_DIR"
-        python2 $PROJECT_ROOT/ScanNet/SensReader/python/reader.py \
+        python2 $SENSREADER_DIR/reader.py \
             --filename "$SENS_FILE" \
             --output_path "$POSED_IMAGES_DIR" \
             --export_depth_images
@@ -68,7 +69,7 @@ do
     if [ ! -d "$POSE_DIR" ] || [ -z "$(ls -A $POSE_DIR 2>/dev/null)" ]; then
         echo "  Extracting poses..."
         mkdir -p "$POSE_DIR"
-        python2 $PROJECT_ROOT/ScanNet/SensReader/python/reader.py \
+        python2 $SENSREADER_DIR/reader.py \
             --filename "$SENS_FILE" \
             --output_path "$POSED_IMAGES_DIR" \
             --export_poses
@@ -80,7 +81,7 @@ do
     if [ ! -d "$INTRINSIC_DIR" ] || [ ! -f "${INTRINSIC_DIR}/intrinsic_color.txt" ] || [ ! -f "${INTRINSIC_DIR}/intrinsic_depth.txt" ]; then
         echo "  Extracting intrinsics..."
         mkdir -p "$INTRINSIC_DIR"
-        python2 $PROJECT_ROOT/ScanNet/SensReader/python/reader.py \
+        python2 $SENSREADER_DIR/reader.py \
             --filename "$SENS_FILE" \
             --output_path "$POSED_IMAGES_DIR" \
             --export_intrinsics
