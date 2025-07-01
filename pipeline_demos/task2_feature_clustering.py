@@ -1,8 +1,8 @@
 # Set cuda environment variables
 import os
 # Project paths
-os.environ["PROJECT_ROOT"] = "/home/shared/"
-os.environ["CONDA_ROOT"] = "/home/shared/miniconda3"
+os.environ["PROJECT_ROOT"] = "/usr/people/nfraissl/CUO"
+os.environ["CONDA_ROOT"] = "/usr/people/nfraissl/CUO//miniconda3"
 os.environ["CONDA_DEFAULT_ENV"] = "classify-unseen-objects"
 os.environ["CONDA_PYTHON_EXE"] = f"{os.environ['CONDA_ROOT']}/bin/python"
 os.environ["CONDA_PREFIX"] = f"{os.environ['CONDA_ROOT']}/envs/classify-unseen-objects"

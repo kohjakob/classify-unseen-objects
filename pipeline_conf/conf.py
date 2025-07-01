@@ -5,7 +5,7 @@ import albumentations as A
 
 # !!! Do not change the following lines, they are needed for autmatic updating of the project root path !!!
 # PROJECT_ROOT_VARIABLE_MARKER
-PROJECT_ROOT = "/home/shared"
+PROJECT_ROOT = "/usr/people/nfraissl/CUO"
 # !!! Do not change the above lines, they are needed for autmatic updating of the project root path !!!
 
 BASE_DIR = PROJECT_ROOT + "/classify-unseen-objects"

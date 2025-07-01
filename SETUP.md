@@ -17,12 +17,38 @@ Currently working setups:
 - For Point-MAE, building and installing ```emd``` and ```chamfer_dist``` as recommended in the original repo is omitted to avoid version conflicts for now. This works, as Point-MAE is currently not used for training but only used for inference.
 ---
 
-## 1. Repository Setup:
+## 1. System Setup:
 
-#### Export environment variable for $PROJECT_ROOT as *absolute* path of parent directory of 'classify-unseen-objects' repository location
-- All dependencies will be installed into $PROJECT_ROOT location: 
-    - ```export PROJECT_ROOT={absolute/path/to/project_root}```
-    - ```cd $PROJECT_ROOT``` 
+#### Create PROJECT_ROOT directory
+- All project dependencies and the `classify_unseen_objects` project repo directory should be inside the PROJECT_ROOT directory
+
+#### Export environment variable for $PROJECT_ROOT as *absolute* path
+- ```export PROJECT_ROOT={absolute/path/to/project_root}```
+- ```cd $PROJECT_ROOT``` 
+
+#### Prerequisites
+- Install g++-9 and gcc-9: 
+    - ```sudo apt install gcc-9 g++-9```
+    - ```export CC=/usr/bin/gcc-9``
+    - ```export CXX=/usr/bin/g++-9``
+- Install [Miniconda3](https://www.anaconda.com/docs/getting-started/miniconda/install) 25.1.1 and add to PATH: 
+    - ```wget -P $PROJECT_ROOT https://repo.anaconda.com/miniconda/Miniconda3-py310_25.1.1-2-Linux-x86_64.sh```
+    - ```bash Miniconda3-py310_25.1.1-2-Linux-x86_64.sh -b -p $PROJECT_ROOT/miniconda3```
+    - ```export PATH=$PROJECT_ROOT/miniconda3/bin:$PATH```
+    - ```which conda```
+- Create conda environment with Python 3.10 and pip 25.0.1 and activate: 
+    - ```conda create -n classify-unseen-objects python=3.10 pip=25.0.0```
+    - ```conda activate classify-unseen-objects```
+- Export conda root and add environment bin to PATH
+    - ```export CONDA_ROOT=$PROJECT_ROOT/miniconda3```
+    - ```export PATH=$CONDA_ROOT/envs/classify-unseen-objects/bin:$PATH```
+    - ```which python; which pip```
+
+## 2. Repository Setup:
+
+#### Clone repo:
+- ```cd $PROJECT_ROOT``` 
+- ```git clone <repo>```
 
 #### Initialize classify-unseen-objects submodules:
 - Initialize and update submodules: 
@@ -31,13 +57,11 @@ Currently working setups:
 - Checkout project structure: 
     - ```tree -L 3 $PROJECT_ROOT/classify-unseen-objects```
 
-
 #### Update $PROJECT_ROOT placeholders:
 - Multiple files contain placeholders for $PROJECT_ROOT. They can be automatically replaced by running: 
     - ```bash $PROJECT_ROOT/classify-unseen-objects/pipeline_conf/project_root_placeholder_replace.sh $PROJECT_ROOT```
 
 #### Download datasets:
-
 - **ShapeNetCore**: [ShapeNetCore](https://www.kaggle.com/datasets/jeremy26/shapenet-core) can be automatically downloaded into ```$PROJECT_ROOT/classify-unseen-objects/data/shapenetcore``` by running: 
     - ```bash $PROJECT_ROOT/classify-unseen-objects/data/download-scripts/download_shapenetcore.sh $PROJECT_ROOT```
 <br>
@@ -45,25 +69,17 @@ Currently working setups:
 - **ScanNet**: Subsets of [ScanNet](http://www.scan-net.org/) scenes can be automatically downloaded into ```$PROJECT_ROOT/classify-unseen-objects/data/scannet/scannet_scenes/``` by running: 
     - ```bash $PROJECT_ROOT/classify-unseen-objects/data/download-scripts/download_scannet.sh $PROJECT_ROOT <start_scene> <stop_scene>```
 
----
+#### Extract posed images using SensReader for ScanNet:
 
-## 2. System Setup:
+- **Install python2**: You can use your local python2 installation or create a local Miniconda environment with Python 2 as follows:
+    - ```conda deactivate```
+    - ```conda create -n sensreader_py2 python=2.7```
+    - ```conda activate sensreader_py2```
+    - ```pip install numpy==1.16.6 imageio==2.4.1 opencv-python==3.4.4.19 pypng==0.0.20```
 
-#### Prerequisites:
-- Install g++-9 and gcc-9: 
-    - ```sudo apt install gcc-9 g++-9```
-- Install [Miniconda3](https://www.anaconda.com/docs/getting-started/miniconda/install) 25.1.1 and add to PATH: 
-    - ```wget -P $PROJECT_ROOT https://repo.anaconda.com/miniconda/Miniconda3-py310_25.1.1-2-Linux-x86_64.sh```
-    - ```bash Miniconda3-py310_25.1.1-2-Linux-x86_64.sh -b -p $PROJECT_ROOT```
-    - ```export PATH=$PROJECT_ROOT/miniconda3/bin:$PATH```
-    - ```which conda```
-- Create conda environment with Python 3.10 and pip 25.0.1 and activate: 
-    - ```conda create -n classify-unseen-objects python=3.10 pip=25.0.1```
-    - ```conda activate classify-unseen-objects```
-- Export conda root and add environment bin to PATH
-    - ```export CONDA_ROOT={path/to/conda_root}```
-    - ```export PATH=$CONDA_ROOT/envs/classify-unseen-objects/bin:$PATH```
-    - ```which python; which pip```
+
+- **Extract posed images** by running:
+    - ```bash $PROJECT_ROOT/classify-unseen-objects/data/download-scripts/sensreader_posed_images_extraction.sh $PROJECT_ROOT <start_scene> <stop_scene>```
 
 ---
 
@@ -104,21 +120,30 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 - Create installation directories for CUDA Toolkit 11.6:
    - ```mkdir $PROJECT_ROOT/cuda-11.6```
    - ```mkdir $PROJECT_ROOT/cuda-11.6/toolkit```
-   - ```mkdir $PROJECT_ROOT/cuda-11.6/defaultroot```
 - Install CUDA Toolkit 11.6: 
-    - ```sudo sh cuda_11.6.0_510.39.01_linux.run --toolkit --toolkitpath=$PROJECT_ROOT/cuda-11.6/toolkit --defaultroot=$PROJECT_ROOT/cuda-11.6/defaultroot```
+    - Update alternatives to user gcc-9:
+        - ```sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60;```
+        - ```sudo update-alternatives --config gcc```
+        - ```which gcc which gxx```
+    - Continue on Abort/Continue warning about found driver installation
+    - Accept eula
+    - Ensure **only** CUDA Toolkit is selected, **not** CUDA Dirver, CUDA Samples, etc.
+    - ```sudo sh cuda_11.6.0_510.39.01_linux.run --toolkit --toolkitpath=$PROJECT_ROOT/cuda-11.6/toolkit```
 - Add CUDA Toolkit 11.6 bin to PATH:
     - ```export PATH=/home/shared/cuda-11.6/toolkit/bin:$PATH```
+    - ```export LD_LIBRARY_PATH=$PROJECT_ROOT/cuda-11.6/toolkit/lib64``` 
+    - ```export CUDNN_LIB_DIR=$PROJECT_ROOT/cuda-11.6/toolkit/lib64``` 
+    - ```export CUDA_HOME=$PROJECT_ROOT/cuda-11.6/toolkit``` 
 ---
 
 ## 4. Python Dependencies Setup:
 
 #### 4.1 Classify Unseen Objects dependencies:
-##### Install required python dependencies:
+##### Install required python dependencies for project GUI:
 >TODO: This should be a unified requirements.txt/env.yml later
 - Other dependencies:    
-    - ```pip install pyqt5;```
-    - ```pip install vtk;```
+    - ```pip install pyqt5```
+    - ```pip install vtk```
     - ```pip install umap-learn```
 
 #### 4.2 UnScene3D dependencies:
@@ -126,16 +151,15 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 ##### Install required python dependencies:
 >TODO: This should be a unified requirements.txt/env.yml later
 - From UnScene3D .yml file: 
-    - ```conda env update --file $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/conf/unscene3d_env.yml --prune```
+    - ```conda env update --file classify-unseen-objects/external/UnScene3D/conf/unscene3d_env.yml --prune```
 - Other dependencies:    
-    - ```pip install open3d;```
-    - ```pip install albumentations;```
-    - ```pip install hydra-core --upgrade;```
-    - ```pip install torch-scatter;```
-    - ```pip install numpy==1.25.1;```
-    - ```pip install albumentations;```
-    - ```pip install wandb;```
-    - ```pip install torchmetrics==1.1.0;```
+    - ```pip install open3d```
+    - ```pip install albumentations```
+    - ```pip install hydra-core --upgrade```
+    - ```pip install torch-scatter```
+    - ```pip install numpy==1.25.1```
+    - ```pip install wandb```
+    - ```pip install torchmetrics==1.1.0```
     - ```pip install easydict```
 ##### Install PyTorch:
 - Install PyTorch 1.13.1 [compatible with CUDA Toolkit 11.6](https://pytorch.org/get-started/previous-versions/): 
@@ -143,16 +167,13 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 
 ##### Build and install MinkowskiEngine:
 - Clone [MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) repo: 
-    - ```git clone https://github.com/NVIDIA/MinkowskiEngine.git $PROJECT_ROOT```
+    - ```git clone https://github.com/NVIDIA/MinkowskiEngine.git $PROJECT_ROOT/minkowski_engine```
 - Export relevant environment variables:
-    - ```export CONDA_DEFAULT_ENV=classify-unseen-objects;``` 
-    - ```export CONDA_PYTHON_EXE=$CONDA_ROOT/bin/python;```  
-    - ```export CONDA_PREFIX=$CONDA_ROOT/envs/classify-unseen-objects;``` 
-    - ```export CONDA_PREFIX_1=$CONDA_ROOT/miniconda3;``` 
-    - ```export LD_LIBRARY_PATH=$PROJECT_ROOT/cuda-11.6/toolkit/lib64;``` 
-    - ```export CUDNN_LIB_DIR=$PROJECT_ROOT/cuda-11.6/toolkit/lib64;``` 
-    - ```export CUDA_HOME=$PROJECT_ROOT/cuda-11.6/toolkit;``` 
-    - ```export TORCH_CUDA_ARCH_LIST="6.0;7.0;7.5";```
+    - ```export CONDA_DEFAULT_ENV=classify-unseen-objects``` 
+    - ```export CONDA_PYTHON_EXE=$CONDA_ROOT/bin/python```  
+    - ```export CONDA_PREFIX=$CONDA_ROOT/envs/classify-unseen-objects``` 
+    - ```export CONDA_PREFIX_1=$CONDA_ROOT/miniconda3``` 
+    - ```export TORCH_CUDA_ARCH_LIST="6.0;7.0;7.5"```
     - ```export CXX=g++-9;``` 
     - ```export CC=gcc-9```
 - Symlink g++ to g++-9: 
@@ -170,7 +191,7 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 - Install openblas-devel: 
     - ```conda install openblas-devel -c anaconda```
 - Build and install to MinkowskiEngine: 
-    - ```cd $PROJECT_ROOT/MinkowskiEngine;```
+    - ```cd $PROJECT_ROOT/minkowski_engine```
     - ```python setup.py install --blas_include_dirs=${CONDA_PREFIX}/include --blas=openblas```
 - Reconfigure alternatives to use previously used gcc version:
     - ```sudo update-alternatives --config gcc```
@@ -182,14 +203,15 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 
 ##### Build and install UnScene3D Utils:
 - C++ utils: 
-    - ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/utils/cpp_utils;```
+    - ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/utils/cpp_utils```
+    - ```pip install pybind11```
     - ```python setup.py install```
 - CUDA utils: 
-    - ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/utils/cuda_utils;```
+    - ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/utils/cuda_utils```
     - ```python setup.py install```
      
 ##### Build and install PointNet2:
-- ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/third_party/pointnet2;```
+- ```cd $PROJECT_ROOT/classify-unseen-objects/external/UnScene3D/third_party/pointnet2```
 - ```python setup.py install```
 
 #### 4.3 PointMAE dependencies:
@@ -199,8 +221,8 @@ toolkitpath=$PROJECT_ROOT/cuda-12.4/toolkit --defaultroot=$PROJECT_ROOT/cuda-12.
 - From Point-MAE requirements.txt:
     - ```pip install -r $PROJECT_ROOT/classify-unseen-objects/external/PointMAE/requirements.txt```
 - Other dependencies:    
-    - ```pip install emd;```
-    - ```pip install timm;```
+    - ```pip install emd```
+    - ```pip install timm```
     - ```pip install loguru```
 ##### Install pointnet2_ops
 - ```pip install "git+https://github.com/erikwijmans/Pointnet2_PyTorch.git#egg=pointnet2_ops&subdirectory=pointnet2_ops_lib"```

@@ -10,8 +10,8 @@ from natsort import natsorted
 from pipeline_conf.conf import CONFIG
 from pipeline_utils.data_utils import load_scannet_scene_data
 
-sys.path.insert(0, CONFIG.semanticsam)
 sys.path.insert(0, CONFIG.sai3d)
+sys.path.insert(0, CONFIG.semanticsam)
 from helpers.sam_utils import get_sam_by_iou, num_to_natural, viz_mask, my_prepare_image
 from semantic_sam import build_semantic_sam, SemanticSamAutomaticMaskGenerator
 from sai3d import ScanNet_SAI3D
