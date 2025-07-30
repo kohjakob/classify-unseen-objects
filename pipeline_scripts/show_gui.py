@@ -4,10 +4,12 @@ from PyQt5.QtWidgets import QApplication
 import cv2
 from pipeline_conf.conf import CONFIG
 
+os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = '/usr/people/nfraissl/CUO/miniconda3/envs/classify-unseen-objects/lib/python3.8/site-packages/PyQt5/Qt5/plugins/platforms'
+
 # WICHTIG: OpenCVs eigenes Qt-Plugin-Verzeichnis darf nicht verwendet werden
-#cv2_plugin_path = os.path.join(os.environ["CONDA_PREFIX"], "lib", "python3.10", "site-packages", "cv2", "qt", "plugins")
-#if "QT_QPA_PLATFORM_PLUGIN_PATH" in os.environ and os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] == cv2_plugin_path:
-#    del os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"]
+cv2_plugin_path = os.path.join(os.environ["CONDA_PREFIX"], "lib", "python3.10", "site-packages", "cv2", "qt", "plugins")
+if "QT_QPA_PLATFORM_PLUGIN_PATH" in os.environ and os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] == cv2_plugin_path:
+    del os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"]
 
 from pipeline_gui.models.data_model import DataModel
 from pipeline_gui.views.main_view import MainView

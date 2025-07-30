@@ -23,3 +23,8 @@ data/shapenetcore/*
 #!data/checkpoints/.gitkeep
 
 classify_unseen_objects.egg-info/
+
+
+
+build/
+dist/

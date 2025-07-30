@@ -24,7 +24,7 @@ class UnScene3D_Wrapper():
         
         # Build InstanceSegmentation model
         self.model = hydra.utils.instantiate(config.model)
-        
+        print(CONFIG.unscene3d_checkpoint)
         # Load pretrained checkpoint
         _, self.model = load_checkpoint_with_missing_or_exsessive_keys(config, self.model)
         self.model = self.model.to(DEVICE)
